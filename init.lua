@@ -1,4 +1,4 @@
--- flexvrealm 0.1.0 by paramat
+-- flexrealm 0.1.1 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -12,17 +12,34 @@ local YMAX = 33000
 local ZMIN = -33000
 local ZMAX = 33000
 
-local GFAC = 7 -- Gradient factor
-local SANT = -0.005 -- Beach top noise4 threshold
-local DEPT = 1 --  -- Realm depth density threshold
-local STOT = 0.15 --  -- Stone density threshold
-local DIRT = 0.05 --  -- Dirt density threshold
-local FITS = 0 --  -- Fissure noise3 threshold at surface. Controls size of fissures and amount / size of fissure entrances at surface
+local GFAC = 7 -- 7 -- Density gradient factor
+
+local ICET = 0.005 --  -- Ice density threshold noise4
+local SANT = -0.005 -- Beach top threshold noise4
+local SANR = -0.002 -- Beach top threshold randomness noise4
+local ALIT = -0.005 --  -- Airlike density threshold noise4
+local CLLT = -0.1 --  -- Cloud low density threshold noise4
+local CLHT = -0.099 --  -- Cloud high density threshold noise4
+
+local DEPT = 1 --  -- Realm depth density threshold noise1
+local SSHT = 0.55 --  -- Sandstone strata high density threshold noise1
+local SSLT = 0.45 --  -- Sandstone strata low density threshold noise1
+local STOT = 0.15 --  -- Stone density threshold noise1
+local DIRT = 0.05 --  -- Dirt density threshold noise1
+local LELT = -0.2 --  -- LEAN low density threshold noise1
+local LEHT = -0.15 --  -- LEAN high density threshold noise1
+
+local FITS = 0 --  -- Fissure threshold at surface, noise3. Controls size of fissures and amount / size of fissure entrances at surface
 local FEXP = 0.1 --  -- Fissure expansion rate under surface
-local TCHA = 121 --  -- Apple tree maximum 1/x chance per grass node
-local ACHA = 17 --  -- Apple 1/x chance per leaf node
-local CCHA = 529 --  -- Cactus maximum 1/x chance per desert sand node
+
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
+
+local DEST = 0.4 --  -- Desert threshold noise 2
+local TAIT = -0.4 --  -- Taiga threshold noise 2
+local BIOR = 0.05 --  -- Biome noise randomness for blend dithering noise 2
+
+local SCHA = 289 --  -- Tree-seeded node 1/x chance per grass or snowblock
+
 local LINT = 23 --  -- LEAN abm interval
 local LCHA = 32*32 --  -- LEAN abm 1/x chance
 
@@ -80,7 +97,7 @@ minetest.register_node("flexrealm:airlike", {
 	paramtype = "light",
 	sunlight_propagates = true,
 	walkable = false,
-	pointable = true,
+	pointable = false,
 	diggable = false,
 	groups = {not_in_creative_inventory=1},
 })
@@ -92,7 +109,7 @@ minetest.register_node("flexrealm:lean", {
 	light_source = 14,
 	sunlight_propagates = true,
 	walkable = false,
-	pointable = true,
+	pointable = false,
 	buildable_to = true,
 	groups = {not_in_creative_inventory=1},
 })
@@ -104,13 +121,23 @@ minetest.register_node("flexrealm:leanoff", {
 	light_source = 14,
 	sunlight_propagates = true,
 	walkable = false,
-	pointable = true,
+	pointable = false,
 	buildable_to = true,
 	groups = {not_in_creative_inventory=1},
 })
 
 minetest.register_node("flexrealm:grass", {
 	description = "FLR Grass",
+	tiles = {"default_grass.png"},
+	groups = {crumbly=3,soil=1},
+	drop = "default:dirt",
+	sounds = default.node_sound_dirt_defaults({
+		footstep = {name="default_grass_footstep", gain=0.4},
+	}),
+})
+
+minetest.register_node("flexrealm:seedgrass", {
+	description = "FLR Seed Grass",
 	tiles = {"default_grass.png"},
 	groups = {crumbly=3,soil=1},
 	drop = "default:dirt",
@@ -147,6 +174,30 @@ minetest.register_node("flexrealm:destone", {
 	groups = {cracky=3, stone=1},
 	drop = "default:desert_stone",
 	sounds = default.node_sound_stone_defaults(),
+})
+
+minetest.register_node("flexrealm:seedsnow", {
+	description = "FLR Seed Snow",
+	tiles = {"default_snow.png"},
+	groups = {crumbly=3, melts=1},
+	sounds = default.node_sound_dirt_defaults({
+		footstep = {name="default_snow_footstep", gain=0.25},
+		dug = {name="default_snow_footstep", gain=0.75},
+	}),
+})
+
+minetest.register_node("flexrealm:cloud", {
+	description = "FLR Cloud",
+	drawtype = "glasslike",
+	tiles = {"flexrealm_cloud.png"},
+	paramtype = "light",
+	sunlight_propagates = true,
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	post_effect_color = {a=23, r=241, g=248, b=255},
+	groups = {not_in_creative_inventory=1},
 })
 
 -- Abm
@@ -203,13 +254,17 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_tree = minetest.get_content_id("default:tree")
 	local c_snowblock = minetest.get_content_id("default:snowblock")
 	local c_ice = minetest.get_content_id("default:ice")
+	local c_sastone = minetest.get_content_id("default:sandstone")
 	local c_flrairlike = minetest.get_content_id("flexrealm:airlike")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
+	local c_flrseedgrass = minetest.get_content_id("flexrealm:seedgrass")
 	local c_flrsand = minetest.get_content_id("flexrealm:sand")
 	local c_flrdesand = minetest.get_content_id("flexrealm:desand")
 	local c_flrstone = minetest.get_content_id("flexrealm:stone")
 	local c_flrdestone = minetest.get_content_id("flexrealm:destone")
+	local c_flrseedsnow = minetest.get_content_id("flexrealm:seedsnow")
 	local c_flrleanoff = minetest.get_content_id("flexrealm:leanoff")
+	local c_flrcloud = minetest.get_content_id("flexrealm:cloud")
 	
 	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals2 = minetest.get_perlin_map(np_biome, chulens):get3dMap_flat(minpos)
@@ -227,9 +282,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local forest = false
 		local taiga = false
 		local noise2 = nvals2[ni]
-		if noise2 > 0.4 then
+		if noise2 > DEST + (math.random() - 0.5) * BIOR then
 			desert = true
-		elseif noise2 < -0.4 then
+		elseif noise2 < TAIT + (math.random() - 0.5) * BIOR then
 			taiga = true
 		else
 			forest = true
@@ -241,7 +296,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			nofis = true
 		end
 		if density >= STOT and density <= DEPT and nofis then -- stone cut by fissures
-			if desert then
+			if density >= SSLT and density <= SSHT then
+				data[vi] = c_sastone
+			elseif desert then
 				data[vi] = c_flrdestone
 			elseif math.random(OCHA) == 2 then
 				local osel = math.random(34)
@@ -262,8 +319,12 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				data[vi] = c_flrstone
 			end
 		elseif density > 0 and density < STOT then -- fine materials not cut by fissures
-			if noise4 >= SANT then
-				data[vi] = c_flrsand
+			if noise4 >= SANT + (math.random() - 0.5) * SANR then
+				if taiga and density < DIRT and noise4 <= 0 then -- snowy beach
+					data[vi] = c_snowblock
+				else
+					data[vi] = c_flrsand
+				end
 			elseif nofis then -- fine materials cut by fissures
 				if desert then
 					data[vi] = c_flrdesand
@@ -271,15 +332,24 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					if density >= DIRT then
 						data[vi] = c_dirt
 					else
+						local seed = math.random(SCHA) == 2
 						if taiga then
-							data[vi] = c_snowblock
+							if seed then
+								data[vi] = c_flrseedsnow
+							else
+								data[vi] = c_snowblock
+							end
 						else
-							data[vi] = c_flrgrass
+							if seed then
+								data[vi] = c_flrseedgrass
+							else
+								data[vi] = c_flrgrass
+							end
 						end
 					end
 				end
 			end
-		elseif taiga and noise4 > 0 and noise4 <= 0.005 and density < 0 then
+		elseif taiga and noise4 > 0 and noise4 <= ICET and density < 0 then
 			if nodid == c_air then
 				data[vi] = c_ice
 			end
@@ -287,13 +357,20 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			if nodid == c_air then
 				data[vi] = c_watsource
 			end
-		elseif noise4 >= -0.005 and noise4 <= 0 and density < 0 then
+		elseif noise4 >= ALIT and noise4 <= 0 and density < 0 then
 			if nodid == c_air then
 				data[vi] = c_flrairlike
 			end
-		elseif density >= -0.2 and density <= -0.15 then
+		elseif density >= LELT and density <= LEHT then
 			if nodid == c_air then
 				data[vi] = c_flrleanoff
+			end
+		elseif noise4 >= CLLT and noise4 <= CLHT 
+		and ((density >= -1 and density <= -0.9) 
+		or (density >= -0.6 and density <= -0.5) 
+		or (density >= -0.2 and density <= -0.1)) then
+			if nodid == c_air then
+				data[vi] = c_flrcloud
 			end
 		end
 		ni = ni + 1
@@ -301,7 +378,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	end
 	end
 	vm:set_data(data)
-	vm:set_lighting({day=0, night=0})
+	-- vm:set_lighting({day=0, night=0})
 	vm:calc_lighting()
 	vm:write_to_map(data)
 end)
