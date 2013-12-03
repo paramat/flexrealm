@@ -1,4 +1,4 @@
--- flexrealm 0.1.1 by paramat
+-- flexrealm 0.1.2 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -12,20 +12,21 @@ local YMAX = 33000
 local ZMIN = -33000
 local ZMAX = 33000
 
-local GFAC = 7 -- 7 -- Density gradient factor
+local GFAC = 10 --  -- Density gradient factor, reduce for higher hills
 
 local ICET = 0.005 --  -- Ice density threshold noise4
 local SANT = -0.005 -- Beach top threshold noise4
 local SANR = -0.002 -- Beach top threshold randomness noise4
 local ALIT = -0.005 --  -- Airlike density threshold noise4
 local CLLT = -0.1 --  -- Cloud low density threshold noise4
-local CLHT = -0.099 --  -- Cloud high density threshold noise4
+local CLHT = -0.0985 --  -- Cloud high density threshold noise4
 
 local DEPT = 1 --  -- Realm depth density threshold noise1
 local SSHT = 0.55 --  -- Sandstone strata high density threshold noise1
 local SSLT = 0.45 --  -- Sandstone strata low density threshold noise1
 local STOT = 0.15 --  -- Stone density threshold noise1
 local DIRT = 0.05 --  -- Dirt density threshold noise1
+local TRET = 0.03 --  -- Tree growth density threshold noise1
 local LELT = -0.2 --  -- LEAN low density threshold noise1
 local LEHT = -0.15 --  -- LEAN high density threshold noise1
 
@@ -38,9 +39,10 @@ local DEST = 0.4 --  -- Desert threshold noise 2
 local TAIT = -0.4 --  -- Taiga threshold noise 2
 local BIOR = 0.05 --  -- Biome noise randomness for blend dithering noise 2
 
-local SCHA = 289 --  -- Tree-seeded node 1/x chance per grass or snowblock
+local TCHA = 169 --  -- Tree 1/x chance per grass or snowblock
+local ACHA = 48 --  -- Apple 1/x chance per tree node
 
-local LINT = 23 --  -- LEAN abm interval
+local LINT = 17 --  -- LEAN abm interval
 local LCHA = 32*32 --  -- LEAN abm 1/x chance
 
 -- Noise parameters
@@ -52,7 +54,7 @@ local np_terrain = {
 	scale = 1,
 	spread = {x=256, y=256, z=256},
 	seed = -83928935,
-	octaves = 5,
+	octaves = 6,
 	persist = 0.6
 }
 
@@ -86,7 +88,7 @@ local np_dengrad = {
 	spread = {x=512, y=512, z=512},
 	seed = 800000022222,
 	octaves = 3,
-	persist = 0.33
+	persist = 0.3
 }
 
 -- Nodes
@@ -136,16 +138,6 @@ minetest.register_node("flexrealm:grass", {
 	}),
 })
 
-minetest.register_node("flexrealm:seedgrass", {
-	description = "FLR Seed Grass",
-	tiles = {"default_grass.png"},
-	groups = {crumbly=3,soil=1},
-	drop = "default:dirt",
-	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_grass_footstep", gain=0.4},
-	}),
-})
-
 minetest.register_node("flexrealm:sand", {
 	description = "FLR Sand",
 	tiles = {"default_sand.png"},
@@ -176,16 +168,6 @@ minetest.register_node("flexrealm:destone", {
 	sounds = default.node_sound_stone_defaults(),
 })
 
-minetest.register_node("flexrealm:seedsnow", {
-	description = "FLR Seed Snow",
-	tiles = {"default_snow.png"},
-	groups = {crumbly=3, melts=1},
-	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_snow_footstep", gain=0.25},
-		dug = {name="default_snow_footstep", gain=0.75},
-	}),
-})
-
 minetest.register_node("flexrealm:cloud", {
 	description = "FLR Cloud",
 	drawtype = "glasslike",
@@ -214,6 +196,145 @@ minetest.register_abm({
 -- Stuff
 
 flexrealm = {}
+
+-- Functions
+
+function flexrealm_apptree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, c_apple)
+								local treedir = 6
+								local nxp = nvals4[ni + 1] -- x positive, direction 1
+								local nxn = nvals4[ni - 1] -- x negative, 2
+								local nyp = nvals4[ni + 80] -- 3
+								local nyn = nvals4[ni - 80] -- 4
+								local nzp = nvals4[ni + 6400] -- 5
+								local nzn = nvals4[ni - 6400] -- 6
+								local nlo = nzn
+								if nxp < nlo then
+									treedir = 1
+									nlo = nxp
+								end
+								if nxn < nlo then
+									treedir = 2
+									nlo = nxn
+								end
+								if nyp < nlo then
+									treedir = 3
+									nlo = nyp
+								end
+								if nyn < nlo then
+									treedir = 4
+									nlo = nyn
+								end
+								if nzp < nlo then
+									treedir = 5
+									nlo = nzp
+								end
+								if nzn < nlo then
+									treedir = 6
+								end
+								if treedir == 1 then
+									for i = 0, 5 do
+										if i >= 3 and i <= 5 then
+											for j = -2, 2 do
+											for k = -2, 2 do
+												local vil = area:index(x + i + 1, y + j, z + k)
+												if math.random(ACHA) == 2 then
+													data[vil] = c_apple
+												elseif math.random(2) == 2 then
+													data[vil] = c_leaves
+												end
+											end
+											end
+										end
+										local vit = area:index(x + i, y, z)
+										data[vit] = c_tree
+									end
+								elseif treedir == 2 then
+									for i = 0, 5 do
+										if i >= 3 and i <= 5 then
+											for j = -2, 2 do
+											for k = -2, 2 do
+												local vil = area:index(x - i - 1, y + j, z + k)
+												if math.random(ACHA) == 2 then
+													data[vil] = c_apple
+												elseif math.random(2) == 2 then
+													data[vil] = c_leaves
+												end
+											end
+											end
+										end
+										local vit = area:index(x - i, y, z)
+										data[vit] = c_tree
+									end
+								elseif treedir == 3 then
+									for j = 0, 5 do
+										if j >= 3 and j <= 5 then
+											for i = -2, 2 do
+											for k = -2, 2 do
+												local vil = area:index(x + i, y + j + 1, z + k)
+												if math.random(ACHA) == 2 then
+													data[vil] = c_apple
+												elseif math.random(2) == 2 then
+													data[vil] = c_leaves
+												end
+											end
+											end
+										end
+										local vit = area:index(x, y + j, z)
+										data[vit] = c_tree
+									end
+								elseif treedir == 4 then
+									for j = 0, 5 do
+										if j >= 3 and j <= 5 then
+											for i = -2, 2 do
+											for k = -2, 2 do
+												local vil = area:index(x + i, y - j - 1, z + k)
+												if math.random(ACHA) == 2 then
+													data[vil] = c_apple
+												elseif math.random(2) == 2 then
+													data[vil] = c_leaves
+												end
+											end
+											end
+										end
+										local vit = area:index(x, y - j, z)
+										data[vit] = c_tree
+									end
+								elseif treedir == 5 then
+									for k = 0, 5 do
+										if k >= 3 and k <= 5 then
+											for i = -2, 2 do
+											for j = -2, 2 do
+												local vil = area:index(x + i, y + j, z + k + 1)
+												if math.random(ACHA) == 2 then
+													data[vil] = c_apple
+												elseif math.random(2) == 2 then
+													data[vil] = c_leaves
+												end
+											end
+											end
+										end
+										local vit = area:index(x, y, z + k)
+										data[vit] = c_tree
+									end
+								elseif treedir == 6 then
+									for k = 0, 5 do
+										if k >= 3 and k <= 5 then
+											for i = -2, 2 do
+											for j = -2, 2 do
+												local vil = area:index(x + i, y + j, z - k - 1)
+												if math.random(ACHA) == 2 then
+													data[vil] = c_apple
+												elseif math.random(2) == 2 then
+													data[vil] = c_leaves
+												end
+											end
+											end
+										end
+										local vit = area:index(x, y, z - k)
+										data[vit] = c_tree
+									end
+								end
+end
 
 -- On generated function
 
@@ -257,12 +378,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_sastone = minetest.get_content_id("default:sandstone")
 	local c_flrairlike = minetest.get_content_id("flexrealm:airlike")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
-	local c_flrseedgrass = minetest.get_content_id("flexrealm:seedgrass")
 	local c_flrsand = minetest.get_content_id("flexrealm:sand")
 	local c_flrdesand = minetest.get_content_id("flexrealm:desand")
 	local c_flrstone = minetest.get_content_id("flexrealm:stone")
 	local c_flrdestone = minetest.get_content_id("flexrealm:destone")
-	local c_flrseedsnow = minetest.get_content_id("flexrealm:seedsnow")
 	local c_flrleanoff = minetest.get_content_id("flexrealm:leanoff")
 	local c_flrcloud = minetest.get_content_id("flexrealm:cloud")
 	
@@ -332,16 +451,24 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					if density >= DIRT then
 						data[vi] = c_dirt
 					else
-						local seed = math.random(SCHA) == 2
+						local tree = false
+						if math.random(TCHA) == 2 then
+							if density <= TRET -- surface node
+							and x-x0 >= 1 and x1 - x >= 1
+							and y-y0 >= 1 and y1 - y >= 1
+							and z-z0 >= 1 and z1 - z >= 1 then
+								tree = true
+							end
+						end
 						if taiga then
-							if seed then
-								data[vi] = c_flrseedsnow
+							if tree then
+								data[vi] = c_snowblock
 							else
 								data[vi] = c_snowblock
 							end
 						else
-							if seed then
-								data[vi] = c_flrseedgrass
+							if tree then
+								flexrealm_apptree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, c_apple)
 							else
 								data[vi] = c_flrgrass
 							end
