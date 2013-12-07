@@ -1,4 +1,4 @@
--- flexrealm 0.1.4 by paramat
+-- flexrealm 0.1.5 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -12,28 +12,30 @@ local YMAX = 33000
 local ZMIN = -33000
 local ZMAX = 33000
 
-local GFAC = 10 --  -- Density gradient factor, reduce for higher hills
+local GFAC = 10 --  -- Density gradient factor (noise4 multiplier). Reduce for higher hills
 
--- Noise4
-local ICET = 0.005 --  -- Ice density threshold
-local SANT = -0.005 --  -- Beach top density threshold
-local SANR = -0.002 --  -- Beach top density threshold randomness
-local ALIT = -0.005 --  -- Airlike water barrier nodes density threshold
-local CLLT = -0.1 --  -- Cloud low density threshold
-local CLHT = -0.0993 --  -- Cloud high density threshold
+-- Large scale density field grad = noise4 * GFAC
+local ICET = 0.05 --  -- Ice density threshold
+local SANT = -0.05 --  -- Beach top density threshold
+local SANR = -0.02 --  -- Beach top density threshold randomness
+local ALIT = -0.05 --  -- Airlike water barrier nodes density threshold
+local ROCK = -0.4 --  -- Rocky terrain density threshold
+local CLLT = -1 --  -- Cloud low density threshold
+local CLHT = -0.995 --  -- Cloud high density threshold
 
--- Noise1
+-- Terrain density field
 local DEPT = 1 --  -- Realm depth density threshold
-local SSLT1 = 0.35 --  -- Sandstone strata low density threshold1
-local SSHT1 = 0.40 --  -- Sandstone strata high density threshold1
-local SSLT2 = 0.45 --  -- Sandstone strata low density threshold2
-local SSHT2 = 0.55 --  -- Sandstone strata high density threshold2
-local STOT = 0.15 --  -- Stone density threshold
+local SSLT1 = 0.20 --  -- Sandstone strata low density threshold1
+local SSHT1 = 0.25 --  -- Sandstone strata high density threshold1
+local SSLT2 = 0.30 --  -- Sandstone strata low density threshold2
+local SSHT2 = 0.40 --  -- Sandstone strata high density threshold2
+local STOT = 0.10 --  -- Stone density threshold at sea level
 local DIRT = 0.05 --  -- Dirt density threshold
 local TRET = 0.005 --  -- Tree growth density threshold, links tree density to soil depth
 local LELT = -0.2 --  -- LEAN (Light Emitting Airlike Node) low density threshold
-local LEHT = -0.15 --  -- LEAN high density threshold
+local LEHT = -0.16 --  -- LEAN high density threshold
 
+-- Noise3
 local FITS = 0 --  -- Fissure threshold at surface. Controls size of fissures and amount / size of fissure entrances at surface
 local FEXP = 0.1 --  -- Fissure expansion rate under surface
 
@@ -46,8 +48,8 @@ local BIOR = 0.05 --  -- Biome noise randomness for blend dithering
 
 local TCHA = 49 --  -- Tree maximum 1/x chance per grass or snowblock
 
-local LINT = 17 --  -- LEAN abm interval
-local LCHA = 32*32 --  -- LEAN abm 1/x chance
+local LINT = 23 --  -- LEAN abm interval
+local LCHA = 16*16 --  -- LEAN abm 1/x chance
 
 -- Noise parameters
 
@@ -57,8 +59,8 @@ local np_terrain = {
 	offset = 0,
 	scale = 1,
 	spread = {x=256, y=256, z=256},
-	seed = 9289,
-	octaves = 5,
+	seed = 92,
+	octaves = 6,
 	persist = 0.6
 }
 
@@ -68,17 +70,39 @@ local np_alter = {
 	offset = 0,
 	scale = 1,
 	spread = {x=207, y=207, z=207},
-	seed = 800911,
-	octaves = 5,
+	seed = -3911,
+	octaves = 6,
 	persist = 0.6
 }
 
--- 3D noise 6 for terrain blend / select
+-- 3D noise 7 for smooth terrain
+
+local np_smooth = {
+	offset = 0,
+	scale = 1,
+	spread = {x=512, y=512, z=512},
+	seed = 800911,
+	octaves = 4,
+	persist = 0.3
+}
+
+-- 3D noise 8 for terrain blend
 
 local np_terblen = {
 	offset = 0,
 	scale = 1,
-	spread = {x=335, y=335, z=335},
+	spread = {x=414, y=414, z=414},
+	seed = -440002,
+	octaves = 1,
+	persist = 0.5
+}
+
+-- 3D noise 6 for faults
+
+local np_fault = {
+	offset = 0,
+	scale = 1,
+	spread = {x=256, y=256, z=256},
 	seed = 14440002,
 	octaves = 4,
 	persist = 0.5
@@ -89,8 +113,8 @@ local np_terblen = {
 local np_biome = {
 	offset = 0,
 	scale = 1,
-	spread = {x=256, y=256, z=256},
-	seed = 5055989881,
+	spread = {x=250, y=250, z=250},
+	seed = 9130,
 	octaves = 3,
 	persist = 0.5
 }
@@ -113,7 +137,7 @@ local np_dengrad = {
 	scale = 1,
 	spread = {x=828, y=828, z=828},
 	seed = 80000002222208,
-	octaves = 4,
+	octaves = 3,
 	persist = 0.3
 }
 
@@ -144,12 +168,14 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		return
 	end
 	
+	local t1 = os.clock()
 	local x0 = minp.x
 	local y0 = minp.y
 	local z0 = minp.z
 	local x1 = maxp.x
 	local y1 = maxp.y
 	local z1 = maxp.z
+	print ("[flexrealm] chunk minp ("..x0.." "..y0.." "..z0..")")
 	local sidelen = x1 - x0 + 1 -- chunk side length
 	local vplanarea = sidelen ^ 2 -- vertical plane area, used if calculating noise index from x y z
 	local chulens = {x=sidelen, y=sidelen, z=sidelen}
@@ -192,7 +218,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals3 = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minpos)
 	local nvals4 = minetest.get_perlin_map(np_dengrad, chulens):get3dMap_flat(minpos)
 	local nvals5 = minetest.get_perlin_map(np_alter, chulens):get3dMap_flat(minpos)
-	local nvals6 = minetest.get_perlin_map(np_terblen, chulens):get3dMap_flat(minpos)
+	local nvals6 = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
+	local nvals7 = minetest.get_perlin_map(np_smooth, chulens):get3dMap_flat(minpos)
+	local nvals8 = minetest.get_perlin_map(np_terblen, chulens):get3dMap_flat(minpos)
 	
 	local ni = 1
 	for z = z0, z1 do
@@ -214,23 +242,26 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			forest = true
 		end
 		
-		local terno -- Terrain noise
-		local noise6 = nvals6[ni]
+		local terno -- terrain noise
+		local noise6 = nvals6[ni] -- faults
+		local terblen = math.min(math.abs(nvals8[ni]) * 2, 1) -- terrain blend with smooth
 		if noise6 > 0 then
-			terno = (nvals1[ni] + nvals5[ni]) / 2
+			terno = (nvals1[ni] + nvals5[ni]) / 2 * (1 - terblen) + nvals7[ni] * terblen
 		else
-			terno = (nvals1[ni] - nvals5[ni]) / 2
+			terno = (nvals1[ni] - nvals5[ni]) / 2 * (1 - terblen) - nvals7[ni] * terblen
 		end
 		local noise4 = nvals4[ni]
-		local grad = noise4 * GFAC -- large scale density gradient
-		local density = terno + grad 
+		local grad = noise4 * GFAC -- large scale density field
+		--local grad = (208 - y) / 96 -- flat realm for testing, normally disable this line
+		local density = terno + grad -- terrain density field
 		
-		if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP 
-		or math.abs(noise6) < 0.1 then -- if no fissure or close to fault then
+		if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then -- if no fissure then
 			nofis = true
 		end
 		
-		if density >= STOT and density <= DEPT and nofis then -- stone cut by fissures
+		local stot = STOT * (1 - grad / ROCK)
+		
+		if density >= stot and density <= DEPT and nofis then -- stone cut by fissures
 			if (density >= SSLT1 and density <= SSHT1)
 			or (density >= SSLT2 and density <= SSHT2) then
 				data[vi] = c_sastone
@@ -254,9 +285,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			else
 				data[vi] = c_flrstone
 			end
-		elseif density > 0 and density < STOT then -- fine materials not cut by fissures
-			if noise4 >= SANT + (math.random() - 0.5) * SANR then
-				if taiga and density < DIRT and noise4 <= 0 then -- snowy beach
+		elseif density > 0 and density < stot then -- fine materials not cut by fissures
+			if grad >= SANT + (math.random() - 0.5) * SANR then
+				if taiga and density < DIRT and grad <= 0 then -- snowy beach
 					data[vi] = c_snowblock
 				else
 					data[vi] = c_flrsand
@@ -294,24 +325,25 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					end
 				end
 			end
-		elseif taiga and noise4 > 0 and noise4 <= ICET and density < 0 then
+		elseif taiga and grad > 0 and grad <= ICET and density < 0 then
 			if nodid == c_air then
 				data[vi] = c_ice
 			end
-		elseif noise4 > 0 and density < 0 then
+		elseif grad > 0 and density < 0 then
 			if nodid == c_air then
 				data[vi] = c_watsource
 			end
-		elseif noise4 >= ALIT and noise4 <= 0 and density < 0 then
+		elseif grad >= ALIT and grad <= 0 and density < 0 then
 			if nodid == c_air then
 				data[vi] = c_flrairlike
 			end
+		elseif not nofis and grad >= ALIT and density > 0 and density < DEPT and math.abs(noise6) < 0.05 then
+			data[vi] = c_flrsand -- sand blocking fissures in cliffs below water level
 		elseif density >= LELT and density <= LEHT then
 			if nodid == c_air then
 				data[vi] = c_flrleanoff
 			end
-		elseif noise4 >= CLLT and noise4 <= CLHT 
-		and ((density >= -1.1 and density <= -1.05) or (density >= -0.95 and density <= -0.9)) then
+		elseif grad >= CLLT and grad <= CLHT and ((density >= -1.1 and density <= -1.05) or (density >= -0.95 and density <= -0.9)) then
 			if nodid == c_air then
 				data[vi] = c_flrcloud
 			end
@@ -324,4 +356,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	vm:set_lighting({day=0, night=0})
 	vm:calc_lighting()
 	vm:write_to_map(data)
+	local chugent = math.ceil((os.clock() - t1) * 1000)
+	print ("[flexrealm] "..chugent.." ms")
 end)

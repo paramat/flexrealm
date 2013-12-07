@@ -30,6 +30,7 @@ function flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, 
 	if nzn < nlo then
 		treedir = 6
 	end
+	--treedir = 3 -- y+ for testing
 	if treedir == 1 then
 		for i = 0, 5 do
 			if i >= 3 and i <= 5 then
@@ -167,6 +168,7 @@ function flexrealm_pinetree(x, y, z, ni, nvals4, area, data, c_tree, c_flrneedle
 	if nzn < nlo then
 		treedir = 6
 	end
+	--treedir = 3 -- y+ for testing
 	if treedir == 1 then
 		for i = -2, 11 do
 		for j = -1, 1 do
