@@ -93,3 +93,21 @@ minetest.register_node("flexrealm:needles", {
 	groups = {snappy=3, leafdecay=3},
 	sounds = default.node_sound_leaves_defaults(),
 })
+
+minetest.register_node("flexrealm:drygrass", {
+	description = "FLR Dry Grass",
+	tiles = {"paragen_drygrass.png"},
+	groups = {crumbly=3,soil=1},
+	drop = "default:dirt",
+	sounds = default.node_sound_dirt_defaults({
+		footstep = {name="default_grass_footstep", gain=0.4},
+	}),
+})
+
+minetest.register_node("flexrealm:perfrost", {
+	description = "FLR Permafrost",
+	tiles = {"flexrealm_perfrost.png"},
+	groups = {crumbly=1},
+	drop = "default:dirt",
+	sounds = default.node_sound_dirt_defaults(),
+})

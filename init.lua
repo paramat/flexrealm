@@ -1,4 +1,4 @@
--- flexrealm 0.1.5 by paramat
+-- flexrealm 0.2.0 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -41,12 +41,14 @@ local FEXP = 0.1 --  -- Fissure expansion rate under surface
 
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
 
--- Noise2
-local DEST = 0.4 --  -- Desert threshold
-local TAIT = -0.4 --  -- Taiga threshold
+-- Noise2 and noise9
+local HTET = 0.4 --  -- Desert / savanna / rainforest temperature noise threshold.
+local LTET = -0.4 --  -- Tundra / taiga temperature noise threshold.
+local HWET = 0.4 --  -- Wet grassland / rainforest wetness noise threshold.
+local LWET = -0.4 --  -- Tundra / dry grassland / desert wetness noise threshold.
 local BIOR = 0.05 --  -- Biome noise randomness for blend dithering
 
-local TCHA = 49 --  -- Tree maximum 1/x chance per grass or snowblock
+local TCHA = 121 --  -- Tree maximum 1/x chance per grass or snowblock
 
 local LINT = 23 --  -- LEAN abm interval
 local LCHA = 16*16 --  -- LEAN abm 1/x chance
@@ -82,8 +84,8 @@ local np_smooth = {
 	scale = 1,
 	spread = {x=512, y=512, z=512},
 	seed = 800911,
-	octaves = 4,
-	persist = 0.3
+	octaves = 5,
+	persist = 0.4
 }
 
 -- 3D noise 8 for terrain blend
@@ -108,14 +110,25 @@ local np_fault = {
 	persist = 0.5
 }
 
--- 3D noise 2 for biomes
+-- 3D noise 2 for temperature
 
-local np_biome = {
+local np_temp = {
 	offset = 0,
 	scale = 1,
-	spread = {x=250, y=250, z=250},
+	spread = {x=512, y=512, z=512},
 	seed = 9130,
-	octaves = 3,
+	octaves = 2,
+	persist = 0.5
+}
+
+-- 3D noise 9 for humidity
+
+local np_humid = {
+	offset = 0,
+	scale = 1,
+	spread = {x=512, y=512, z=512},
+	seed = -55500,
+	octaves = 2,
 	persist = 0.5
 }
 
@@ -212,15 +225,18 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrleanoff = minetest.get_content_id("flexrealm:leanoff")
 	local c_flrcloud = minetest.get_content_id("flexrealm:cloud")
 	local c_flrneedles = minetest.get_content_id("flexrealm:needles")
+	local c_flrdrygrass = minetest.get_content_id("flexrealm:drygrass")
+	local c_flrperfrost = minetest.get_content_id("flexrealm:perfrost")
 	
 	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
-	local nvals2 = minetest.get_perlin_map(np_biome, chulens):get3dMap_flat(minpos)
+	local nvals2 = minetest.get_perlin_map(np_temp, chulens):get3dMap_flat(minpos)
 	local nvals3 = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minpos)
 	local nvals4 = minetest.get_perlin_map(np_dengrad, chulens):get3dMap_flat(minpos)
 	local nvals5 = minetest.get_perlin_map(np_alter, chulens):get3dMap_flat(minpos)
 	local nvals6 = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
 	local nvals7 = minetest.get_perlin_map(np_smooth, chulens):get3dMap_flat(minpos)
 	local nvals8 = minetest.get_perlin_map(np_terblen, chulens):get3dMap_flat(minpos)
+	local nvals9 = minetest.get_perlin_map(np_humid, chulens):get3dMap_flat(minpos)
 	
 	local ni = 1
 	for z = z0, z1 do
@@ -228,19 +244,15 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	for x = x0, x1 do -- for each node do
 		local vi = area:index(x, y, z) -- LVM index for node
 		local nodid = data[vi] -- node
-		local nofis = false
-		local desert = false
-		local forest = false
-		local taiga = false
-		
-		local noise2 = nvals2[ni]
-		if noise2 > DEST + (math.random() - 0.5) * BIOR then
-			desert = true
-		elseif noise2 < TAIT + (math.random() - 0.5) * BIOR then
-			taiga = true
-		else
-			forest = true
-		end
+		local desert = false -- desert biome
+		local savanna = false -- savanna biome
+		local raforest = false -- rainforest biome
+		local wetgrass = false -- wet grassland biome
+		local drygrass = false -- dry grassland biome
+		local deforest = false -- deciduous forest biome
+		local tundra = false -- tundra biome
+		local taiga = false -- taiga forest biome
+		local nofis
 		
 		local terno -- terrain noise
 		local noise6 = nvals6[ni] -- faults
@@ -251,55 +263,88 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			terno = (nvals1[ni] - nvals5[ni]) / 2 * (1 - terblen) - nvals7[ni] * terblen
 		end
 		local noise4 = nvals4[ni]
-		local grad = noise4 * GFAC -- large scale density field
-		--local grad = (208 - y) / 96 -- flat realm for testing, normally disable this line
+		--local grad = noise4 * GFAC -- large scale density field
+		local grad = (168 - y) / 96 -- flat realm for testing, normally disable this line
+		--local nodrad = (x ^ 2 + (y - 15000) ^ 2 + z ^ 2) ^ 0.5 -- sphere realm for testing, normally disable this line
+		--local grad = (nodrad - 10000) / 96 -- sphere realm for testing, normally disable this line
 		local density = terno + grad -- terrain density field
 		
-		if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then -- if no fissure then
-			nofis = true
+		if (density > 0 or grad > 0) and density <= DEPT then -- if terrain or water calculate biome
+			local temp = nvals2[ni] + grad
+			local humid = nvals9[ni] + grad
+			if temp > HTET + (math.random() - 0.5) * BIOR then
+				if humid > HWET + (math.random() - 0.5) * BIOR then
+					raforest = true
+				elseif humid < LWET + (math.random() - 0.5) * BIOR then
+					desert = true
+				else
+					savanna = true
+				end
+			elseif temp < LTET + (math.random() - 0.5) * BIOR then
+				if humid < LWET + (math.random() - 0.5) * BIOR then
+					tundra = true
+				else
+					taiga = true
+				end
+			elseif humid > HWET + (math.random() - 0.5) * BIOR then
+				wetgrass = true
+			elseif humid < LWET + (math.random() - 0.5) * BIOR then
+				drygrass = true
+			else
+				deforest = true
+			end
+		end
+			
+		if density > 0 and density <= DEPT then -- if terrain then set nofis
+			nofis = false
+			if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then -- if no fissure then
+				nofis = true
+			end
 		end
 		
-		local stot = STOT * (1 - grad / ROCK)
-		
-		if density >= stot and density <= DEPT and nofis then -- stone cut by fissures
-			if (density >= SSLT1 and density <= SSHT1)
-			or (density >= SSLT2 and density <= SSHT2) then
-				data[vi] = c_sastone
-			elseif desert then
-				data[vi] = c_flrdestone
-			elseif math.random(OCHA) == 2 then
-				local osel = math.random(34)
-				if osel == 34 then
-					data[vi] = c_meseblock -- revenge!
-				elseif osel >= 31 then
-					data[vi] = c_stodiam
-				elseif osel >= 28 then
-					data[vi] = c_stogold
-				elseif osel >= 19 then
-					data[vi] = c_stocopp
-				elseif osel >= 10 then
-					data[vi] = c_stoiron
-				else
-					data[vi] = c_stocoal
-				end
-			else
-				data[vi] = c_flrstone
-			end
-		elseif density > 0 and density < stot then -- fine materials not cut by fissures
-			if grad >= SANT + (math.random() - 0.5) * SANR then
-				if taiga and density < DIRT and grad <= 0 then -- snowy beach
-					data[vi] = c_snowblock
-				else
-					data[vi] = c_flrsand
-				end
-			elseif nofis then -- fine materials cut by fissures
-				if desert then
-					data[vi] = c_flrdesand
-				else
-					if density >= DIRT then
-						data[vi] = c_dirt
+		if grad >= CLLT and density <= DEPT then -- if realm then
+			local stot = STOT * (1 - grad / ROCK)
+			if density >= stot and density <= DEPT and nofis then -- stone cut by fissures
+				if (density >= SSLT1 and density <= SSHT1)
+				or (density >= SSLT2 and density <= SSHT2) then
+					data[vi] = c_sastone
+				elseif desert then
+					data[vi] = c_flrdestone
+				elseif math.random(OCHA) == 2 then
+					local osel = math.random(34)
+					if osel == 34 then
+						data[vi] = c_meseblock -- revenge!
+					elseif osel >= 31 then
+						data[vi] = c_stodiam
+					elseif osel >= 28 then
+						data[vi] = c_stogold
+					elseif osel >= 19 then
+						data[vi] = c_stocopp
+					elseif osel >= 10 then
+						data[vi] = c_stoiron
 					else
+						data[vi] = c_stocoal
+					end
+				else
+					data[vi] = c_flrstone
+				end
+			elseif density > 0 and density < stot then -- fine materials not cut by fissures
+				if grad >= SANT + (math.random() - 0.5) * SANR then
+					if taiga and density < DIRT and grad <= 0 then -- snowy beach
+						data[vi] = c_snowblock
+					else
+						data[vi] = c_flrsand
+					end
+				elseif nofis then -- fine materials cut by fissures
+					if density >= DIRT then
+						if desert then
+							data[vi] = c_flrdesand
+						else
+							data[vi] = c_dirt
+						end
+					else -- else surface nodes
 						local tree = false
+						local treedir
 						if math.random(TCHA) == 2 then
 							if density <= TRET -- surface node, links trees to soil depth
 							-- and noise2 >= -0.8 and noise2 <= 0
@@ -309,43 +354,94 @@ minetest.register_on_generated(function(minp, maxp, seed)
 								tree = true
 							end
 						end
+						if tree then
+							treedir = 6
+							local nxp = nvals4[ni + 1] -- x positive, direction 1
+							local nxn = nvals4[ni - 1] -- x negative, 2
+							local nyp = nvals4[ni + 80] -- 3
+							local nyn = nvals4[ni - 80] -- 4
+							local nzp = nvals4[ni + 6400] -- 5
+							local nzn = nvals4[ni - 6400] -- 6
+							local nlo = nzn
+							if nxp < nlo then
+								treedir = 1
+								nlo = nxp
+							end
+							if nxn < nlo then
+								treedir = 2
+								nlo = nxn
+							end
+							if nyp < nlo then
+								treedir = 3
+								nlo = nyp
+							end
+							if nyn < nlo then
+								treedir = 4
+								nlo = nyn
+							end
+							if nzp < nlo then
+								treedir = 5
+								nlo = nzp
+							end
+							if nzn < nlo then
+								treedir = 6
+							end
+						end
 						if taiga then
 							if tree then
-								flexrealm_pinetree(x, y, z, ni, nvals4, area, data, c_tree, c_flrneedles, c_snowblock)
+								flexrealm_pinetree(x, y, z, treedir, area, data, c_tree, c_flrneedles, c_snowblock)
 							else
 								data[vi] = c_snowblock
 							end
-						else
+						elseif deforest then
 							if tree then
-								flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, c_apple)
+								flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
 							else
 								data[vi] = c_flrgrass
 							end
+						elseif savanna then
+							if tree then
+								--flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
+							--else
+								data[vi] = c_flrdrygrass
+							end
+						elseif raforest then
+							if tree then
+								--flexrealm_jungletree(x, y, z, treedir, area, data, c_tree, c_junleaves)
+							--else
+								data[vi] = c_flrgrass
+							end
+						elseif drygrass then
+							data[vi] = c_flrdrygrass
+						elseif wetgrass then
+							data[vi] = c_flrgrass
+						elseif tundra then
+							data[vi] = c_flrperfrost
 						end
 					end
 				end
-			end
-		elseif taiga and grad > 0 and grad <= ICET and density < 0 then
-			if nodid == c_air then
-				data[vi] = c_ice
-			end
-		elseif grad > 0 and density < 0 then
-			if nodid == c_air then
-				data[vi] = c_watsource
-			end
-		elseif grad >= ALIT and grad <= 0 and density < 0 then
-			if nodid == c_air then
-				data[vi] = c_flrairlike
-			end
-		elseif not nofis and grad >= ALIT and density > 0 and density < DEPT and math.abs(noise6) < 0.05 then
-			data[vi] = c_flrsand -- sand blocking fissures in cliffs below water level
-		elseif density >= LELT and density <= LEHT then
-			if nodid == c_air then
-				data[vi] = c_flrleanoff
-			end
-		elseif grad >= CLLT and grad <= CLHT and ((density >= -1.1 and density <= -1.05) or (density >= -0.95 and density <= -0.9)) then
-			if nodid == c_air then
-				data[vi] = c_flrcloud
+			elseif taiga and grad > 0 and grad <= ICET and density < 0 then
+				if nodid == c_air then
+					data[vi] = c_ice
+				end
+			elseif grad > 0 and density < 0 then
+				if nodid == c_air then
+					data[vi] = c_watsource
+				end
+			elseif grad >= ALIT and grad <= 0 and density < 0 then
+				if nodid == c_air then
+					data[vi] = c_flrairlike
+				end
+			elseif not nofis and grad >= ALIT and density > 0 and density < DEPT and math.abs(noise6) < 0.05 then
+				data[vi] = c_flrsand -- sand blocking fissures in cliffs below water level
+			elseif density >= LELT and density <= LEHT then
+				if nodid == c_air then
+					data[vi] = c_flrleanoff
+				end
+			elseif grad >= CLLT and grad <= CLHT and ((density >= -1.1 and density <= -1.05) or (density >= -0.95 and density <= -0.9)) then
+				if nodid == c_air then
+					data[vi] = c_flrcloud
+				end
 			end
 		end
 		ni = ni + 1

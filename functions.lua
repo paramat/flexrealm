@@ -1,43 +1,12 @@
-function flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, c_apple)
-	local treedir = 6
-	local nxp = nvals4[ni + 1] -- x positive, direction 1
-	local nxn = nvals4[ni - 1] -- x negative, 2
-	local nyp = nvals4[ni + 80] -- 3
-	local nyn = nvals4[ni - 80] -- 4
-	local nzp = nvals4[ni + 6400] -- 5
-	local nzn = nvals4[ni - 6400] -- 6
-	local nlo = nzn
-	if nxp < nlo then
-		treedir = 1
-		nlo = nxp
-	end
-	if nxn < nlo then
-		treedir = 2
-		nlo = nxn
-	end
-	if nyp < nlo then
-		treedir = 3
-		nlo = nyp
-	end
-	if nyn < nlo then
-		treedir = 4
-		nlo = nyn
-	end
-	if nzp < nlo then
-		treedir = 5
-		nlo = nzp
-	end
-	if nzn < nlo then
-		treedir = 6
-	end
-	--treedir = 3 -- y+ for testing
+function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
+	treedir = 3 -- y+ for testing
 	if treedir == 1 then
 		for i = 0, 5 do
 			if i >= 3 and i <= 5 then
 				for j = -2, 2 do
 				for k = -2, 2 do
 					local vil = area:index(x + i + 1, y + j, z + k)
-					if math.random(24) == 2 then
+					if math.random(48) == 2 then
 						data[vil] = c_apple
 					elseif math.random(2) == 2 then
 						data[vil] = c_leaves
@@ -54,7 +23,7 @@ function flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, 
 				for j = -2, 2 do
 				for k = -2, 2 do
 					local vil = area:index(x - i - 1, y + j, z + k)
-					if math.random(24) == 2 then
+					if math.random(48) == 2 then
 						data[vil] = c_apple
 					elseif math.random(2) == 2 then
 						data[vil] = c_leaves
@@ -71,7 +40,7 @@ function flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, 
 				for i = -2, 2 do
 				for k = -2, 2 do
 					local vil = area:index(x + i, y + j + 1, z + k)
-					if math.random(24) == 2 then
+					if math.random(48) == 2 then
 						data[vil] = c_apple
 					elseif math.random(2) == 2 then
 						data[vil] = c_leaves
@@ -88,7 +57,7 @@ function flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, 
 				for i = -2, 2 do
 				for k = -2, 2 do
 					local vil = area:index(x + i, y - j - 1, z + k)
-					if math.random(24) == 2 then
+					if math.random(48) == 2 then
 						data[vil] = c_apple
 					elseif math.random(2) == 2 then
 						data[vil] = c_leaves
@@ -105,7 +74,7 @@ function flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, 
 				for i = -2, 2 do
 				for j = -2, 2 do
 					local vil = area:index(x + i, y + j, z + k + 1)
-					if math.random(24) == 2 then
+					if math.random(48) == 2 then
 						data[vil] = c_apple
 					elseif math.random(2) == 2 then
 						data[vil] = c_leaves
@@ -122,7 +91,7 @@ function flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, 
 				for i = -2, 2 do
 				for j = -2, 2 do
 					local vil = area:index(x + i, y + j, z - k - 1)
-					if math.random(24) == 2 then
+					if math.random(48) == 2 then
 						data[vil] = c_apple
 					elseif math.random(2) == 2 then
 						data[vil] = c_leaves
@@ -136,39 +105,8 @@ function flexrealm_appletree(x, y, z, ni, nvals4, area, data, c_tree, c_leaves, 
 	end
 end
 
-function flexrealm_pinetree(x, y, z, ni, nvals4, area, data, c_tree, c_flrneedles, c_snowblock)
-	local treedir = 6
-	local nxp = nvals4[ni + 1] -- x positive, direction 1
-	local nxn = nvals4[ni - 1] -- x negative, 2
-	local nyp = nvals4[ni + 80] -- 3
-	local nyn = nvals4[ni - 80] -- 4
-	local nzp = nvals4[ni + 6400] -- 5
-	local nzn = nvals4[ni - 6400] -- 6
-	local nlo = nzn
-	if nxp < nlo then
-		treedir = 1
-		nlo = nxp
-	end
-	if nxn < nlo then
-		treedir = 2
-		nlo = nxn
-	end
-	if nyp < nlo then
-		treedir = 3
-		nlo = nyp
-	end
-	if nyn < nlo then
-		treedir = 4
-		nlo = nyn
-	end
-	if nzp < nlo then
-		treedir = 5
-		nlo = nzp
-	end
-	if nzn < nlo then
-		treedir = 6
-	end
-	--treedir = 3 -- y+ for testing
+function flexrealm_pinetree(x, y, z, treedir, area, data, c_tree, c_flrneedles, c_snowblock)
+	treedir = 3 -- y+ for testing
 	if treedir == 1 then
 		for i = -2, 11 do
 		for j = -1, 1 do
