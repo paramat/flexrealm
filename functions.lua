@@ -367,3 +367,98 @@ function flexrealm_pinetree(x, y, z, treedir, area, data, c_tree, c_flrneedles, 
 		end
 	end
 end
+
+function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
+	treedir = 3 -- y+ for testing
+	if treedir == 1 then
+		for i = 0, 6 do
+			if i >= 5 then
+				for j = -3, 3 do
+				for k = -3, 3 do
+					local vil = area:index(x + i + 1, y + j, z + k)
+					if math.random(2) == 2 then
+						data[vil] = c_flrsavleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x + i, y, z)
+			data[vit] = c_tree
+		end
+	elseif treedir == 2 then
+		for i = 0, 6 do
+			if i >= 5 then
+				for j = -3, 3 do
+				for k = -3, 3 do
+					local vil = area:index(x - i - 1, y + j, z + k)
+					if math.random(2) == 2 then
+						data[vil] = c_flrsavleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x - i, y, z)
+			data[vit] = c_tree
+		end
+	elseif treedir == 3 then
+		for j = 0, 6 do
+			if j >= 5 then
+				for i = -3, 3 do
+				for k = -3, 3 do
+					local vil = area:index(x + i, y + j + 1, z + k)
+					if math.random(2) == 2 then
+						data[vil] = c_flrsavleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x, y + j, z)
+			data[vit] = c_tree
+		end
+	elseif treedir == 4 then
+		for j = 0, 6 do
+			if j >= 5 then
+				for i = -3, 3 do
+				for k = -3, 3 do
+					local vil = area:index(x + i, y - j - 1, z + k)
+					if math.random(2) == 2 then
+						data[vil] = c_flrsavleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x, y - j, z)
+			data[vit] = c_tree
+		end
+	elseif treedir == 5 then
+		for k = 0, 6 do
+			if k >= 5 then
+				for i = -3, 3 do
+				for j = -3, 3 do
+					local vil = area:index(x + i, y + j, z + k + 1)
+					if math.random(2) == 2 then
+						data[vil] = c_flrsavleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x, y, z + k)
+			data[vit] = c_tree
+		end
+	elseif treedir == 6 then
+		for k = 0, 6 do
+			if k >= 5 then
+				for i = -3, 3 do
+				for j = -3, 3 do
+					local vil = area:index(x + i, y + j, z - k - 1)
+					if math.random(2) == 2 then
+						data[vil] = c_flrsavleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x, y, z - k)
+			data[vit] = c_tree
+		end
+	end
+end

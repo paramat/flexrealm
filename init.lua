@@ -1,4 +1,4 @@
--- flexrealm 0.2.0 by paramat
+-- flexrealm 0.2.1 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -19,7 +19,7 @@ local ICET = 0.05 --  -- Ice density threshold
 local SANT = -0.05 --  -- Beach top density threshold
 local SANR = -0.02 --  -- Beach top density threshold randomness
 local ALIT = -0.05 --  -- Airlike water barrier nodes density threshold
-local ROCK = -0.4 --  -- Rocky terrain density threshold
+local ROCK = -0.5 --  -- Rocky terrain density threshold
 local CLLT = -1 --  -- Cloud low density threshold
 local CLHT = -0.995 --  -- Cloud high density threshold
 
@@ -42,13 +42,13 @@ local FEXP = 0.1 --  -- Fissure expansion rate under surface
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
 
 -- Noise2 and noise9
-local HTET = 0.4 --  -- Desert / savanna / rainforest temperature noise threshold.
-local LTET = -0.4 --  -- Tundra / taiga temperature noise threshold.
-local HWET = 0.4 --  -- Wet grassland / rainforest wetness noise threshold.
-local LWET = -0.4 --  -- Tundra / dry grassland / desert wetness noise threshold.
+local HTET = 0 --  -- Desert / savanna / rainforest temperature noise threshold.
+local LTET = -0.6 --  -- Tundra / taiga temperature noise threshold.
+local HWET = 0 --  -- Wet grassland / rainforest wetness noise threshold.
+local LWET = -0.6 --  -- Tundra / dry grassland / desert wetness noise threshold.
 local BIOR = 0.05 --  -- Biome noise randomness for blend dithering
 
-local TCHA = 121 --  -- Tree maximum 1/x chance per grass or snowblock
+local TCHA = 49 --  -- Tree maximum 1/x chance per grass or snowblock
 
 local LINT = 23 --  -- LEAN abm interval
 local LCHA = 16*16 --  -- LEAN abm 1/x chance
@@ -227,6 +227,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrneedles = minetest.get_content_id("flexrealm:needles")
 	local c_flrdrygrass = minetest.get_content_id("flexrealm:drygrass")
 	local c_flrperfrost = minetest.get_content_id("flexrealm:perfrost")
+	local c_flrsavleaf = minetest.get_content_id("flexrealm:savleaf")
+	local c_flrjunleaf = minetest.get_content_id("flexrealm:junleaf")
 	
 	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals2 = minetest.get_perlin_map(np_temp, chulens):get3dMap_flat(minpos)
@@ -401,22 +403,24 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							end
 						elseif savanna then
 							if tree then
-								--flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
-							--else
+								flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
+							else
 								data[vi] = c_flrdrygrass
 							end
 						elseif raforest then
-							if tree then
-								--flexrealm_jungletree(x, y, z, treedir, area, data, c_tree, c_junleaves)
+							--if tree then
+								--flexrealm_jungletree(x, y, z, treedir, area, data, c_tree, c_flrjunleaf)
 							--else
 								data[vi] = c_flrgrass
-							end
+							--end
 						elseif drygrass then
 							data[vi] = c_flrdrygrass
 						elseif wetgrass then
 							data[vi] = c_flrgrass
 						elseif tundra then
 							data[vi] = c_flrperfrost
+						elseif desert then
+							data[vi] = c_flrdesand
 						end
 					end
 				end

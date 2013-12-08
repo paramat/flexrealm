@@ -96,7 +96,7 @@ minetest.register_node("flexrealm:needles", {
 
 minetest.register_node("flexrealm:drygrass", {
 	description = "FLR Dry Grass",
-	tiles = {"paragen_drygrass.png"},
+	tiles = {"flexrealm_drygrass.png"},
 	groups = {crumbly=3,soil=1},
 	drop = "default:dirt",
 	sounds = default.node_sound_dirt_defaults({
@@ -110,4 +110,24 @@ minetest.register_node("flexrealm:perfrost", {
 	groups = {crumbly=1},
 	drop = "default:dirt",
 	sounds = default.node_sound_dirt_defaults(),
+})
+
+minetest.register_node("flexrealm:savleaf", {
+	description = "FLR Savanna Tree Leaves",
+	drawtype = "allfaces_optional",
+	visual_scale = 1.3,
+	tiles = {"flexrealm_savleaf.png"},
+	paramtype = "light",
+	groups = {snappy=3, leafdecay=4, flammable=2, leaves=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:junleaf", {
+	description = "FLR Jungletree Leaves",
+	drawtype = "allfaces_optional",
+	visual_scale = 1.3,
+	tiles = {"default_jungleleaves.png"},
+	paramtype = "light",
+	groups = {snappy=3, leafdecay=4, flammable=2, leaves=1},
+	sounds = default.node_sound_leaves_defaults(),
 })
