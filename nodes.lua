@@ -131,3 +131,66 @@ minetest.register_node("flexrealm:junleaf", {
 	groups = {snappy=3, leafdecay=4, flammable=2, leaves=1},
 	sounds = default.node_sound_leaves_defaults(),
 })
+
+-- Optional non-flowing water, range 0
+
+minetest.register_node("flexrealm:watflow", {
+	description = "FLR Flowing Water",
+	inventory_image = minetest.inventorycube("default_water.png"),
+	drawtype = "flowingliquid",
+	tiles = {"default_water.png"},
+	special_tiles = {
+		{
+			image="default_water_flowing_animated.png",
+			backface_culling=false,
+			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=0.8}
+		},
+		{
+			image="default_water_flowing_animated.png",
+			backface_culling=true,
+			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=0.8}
+		},
+	},
+	alpha = WATER_ALPHA,
+	paramtype = "light",
+	paramtype2 = "flowingliquid",
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	drop = "",
+	drowning = 1,
+	liquidtype = "flowing",
+	liquid_alternative_flowing = "flexrealm:watflow",
+	liquid_alternative_source = "flexrealm:watsour",
+	liquid_viscosity = WATER_VISC,
+	freezemelt = "default:snow",
+	liquid_range = 0,
+	post_effect_color = {a=64, r=100, g=100, b=200},
+	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1, freezes=1, melt_around=1},
+})
+
+minetest.register_node("flexrealm:watsour", {
+	description = "FLR Water Source",
+	inventory_image = minetest.inventorycube("default_water.png"),
+	drawtype = "liquid",
+	tiles = {
+		{name="default_water_source_animated.png", animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=2.0}}
+	},
+	alpha = WATER_ALPHA,
+	paramtype = "light",
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	drop = "",
+	drowning = 1,
+	liquidtype = "source",
+	liquid_alternative_flowing = "flexrealm:watflow",
+	liquid_alternative_source = "flexrealm:watsour",
+	liquid_viscosity = WATER_VISC,
+	freezemelt = "default:ice",
+	liquid_range = 0,
+	post_effect_color = {a=64, r=100, g=100, b=200},
+	groups = {water=3, liquid=3, puts_out_fire=1, freezes=1},
+})

@@ -462,3 +462,98 @@ function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavlea
 		end
 	end
 end
+
+function flexrealm_jungletree(x, y, z, treedir, area, data, c_juntree, c_flrjunleaf)
+	treedir = 3 -- y+ for testing
+	if treedir == 1 then
+		for i = -4, 17 do
+			if i == 11 or i == 17 then
+				for j = -2, 2 do
+				for k = -2, 2 do
+					local vil = area:index(x + i + math.random(0, 1), y + j, z + k)
+					if math.random(4) ~= 2 then
+						data[vil] = c_flrjunleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x + i, y, z)
+			data[vit] = c_juntree
+		end
+	elseif treedir == 2 then
+		for i = -4, 17 do
+			if i == 11 or i == 17 then
+				for j = -2, 2 do
+				for k = -2, 2 do
+					local vil = area:index(x - i - math.random(0, 1), y + j, z + k)
+					if math.random(4) ~= 2 then
+						data[vil] = c_flrjunleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x - i, y, z)
+			data[vit] = c_juntree
+		end
+	elseif treedir == 3 then
+		for j = -4, 17 do
+			if j == 11 or j == 17 then
+				for i = -2, 2 do
+				for k = -2, 2 do
+					local vil = area:index(x + i, y + j + math.random(0, 1), z + k)
+					if math.random(4) ~= 2 then
+						data[vil] = c_flrjunleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x, y + j, z)
+			data[vit] = c_juntree
+		end
+	elseif treedir == 4 then
+		for j = -4, 17 do
+			if j == 3 or j == 17 then
+				for i = -2, 2 do
+				for k = -2, 2 do
+					local vil = area:index(x + i, y - j - math.random(0, 1), z + k)
+					if math.random(4) ~= 2 then
+						data[vil] = c_flrjunleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x, y - j, z)
+			data[vit] = c_tree
+		end
+	elseif treedir == 5 then
+		for k = -4, 17 do
+			if k == 3 or k == 17 then
+				for i = -2, 2 do
+				for j = -2, 2 do
+					local vil = area:index(x + i, y + j, z + k + math.random(0, 1))
+					if math.random(4) ~= 2 then
+						data[vil] = c_flrjunleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x, y, z + k)
+			data[vit] = c_juntree
+		end
+	elseif treedir == 6 then
+		for k = -4, 17 do
+			if k == 11 or k == 17 then
+				for i = -2, 2 do
+				for j = -2, 2 do
+					local vil = area:index(x + i, y + j, z - k - math.random(0, 1))
+					if math.random(4) ~= 2 then
+						data[vil] = c_flrjunleaf
+					end
+				end
+				end
+			end
+			local vit = area:index(x, y, z - k)
+			data[vit] = c_juntree
+		end
+	end
+end

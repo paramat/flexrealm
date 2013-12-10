@@ -1,4 +1,4 @@
--- flexrealm 0.2.1 by paramat
+-- flexrealm 0.2.2 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -24,14 +24,16 @@ local CLLT = -1 --  -- Cloud low density threshold
 local CLHT = -0.995 --  -- Cloud high density threshold
 
 -- Terrain density field
-local DEPT = 1 --  -- Realm depth density threshold
+local DEPT = 1.5 --  -- Realm depth density threshold
 local SSLT1 = 0.20 --  -- Sandstone strata low density threshold1
 local SSHT1 = 0.25 --  -- Sandstone strata high density threshold1
 local SSLT2 = 0.30 --  -- Sandstone strata low density threshold2
 local SSHT2 = 0.40 --  -- Sandstone strata high density threshold2
+local SSLT3 = 0.50 --  -- Sandstone strata low density threshold3
+local SSHT3 = 0.55 --  -- Sandstone strata high density threshold3
 local STOT = 0.10 --  -- Stone density threshold at sea level
 local DIRT = 0.05 --  -- Dirt density threshold
-local TRET = 0.005 --  -- Tree growth density threshold, links tree density to soil depth
+local TRET = 0.01 --  -- Tree growth density threshold, links tree density to soil depth
 local LELT = -0.2 --  -- LEAN (Light Emitting Airlike Node) low density threshold
 local LEHT = -0.16 --  -- LEAN high density threshold
 
@@ -48,10 +50,13 @@ local HWET = 0 --  -- Wet grassland / rainforest wetness noise threshold.
 local LWET = -0.6 --  -- Tundra / dry grassland / desert wetness noise threshold.
 local BIOR = 0.05 --  -- Biome noise randomness for blend dithering
 
-local TCHA = 49 --  -- Tree maximum 1/x chance per grass or snowblock
+local ATCHA = 49 --  -- Apple tree maximum 1/x chance per grass
+local PTCHA = 36 --  -- Pine tree maximum 1/x chance per snow block
+local STCHA = 529 --  -- Savanna tree maximum 1/x chance per dry grass
+local JTCHA = 25 --  -- Jungle tree maximum 1/x chance per grass
 
 local LINT = 23 --  -- LEAN abm interval
-local LCHA = 16*16 --  -- LEAN abm 1/x chance
+local LCHA = 32*32 --  -- LEAN abm 1/x chance
 
 -- Noise parameters
 
@@ -215,6 +220,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_ice = minetest.get_content_id("default:ice")
 	local c_sastone = minetest.get_content_id("default:sandstone")
 	local c_needles = minetest.get_content_id("default:needles")
+	local c_juntree = minetest.get_content_id("default:jungletree")
 	
 	local c_flrairlike = minetest.get_content_id("flexrealm:airlike")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
@@ -308,7 +314,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			local stot = STOT * (1 - grad / ROCK)
 			if density >= stot and density <= DEPT and nofis then -- stone cut by fissures
 				if (density >= SSLT1 and density <= SSHT1)
-				or (density >= SSLT2 and density <= SSHT2) then
+				or (density >= SSLT2 and density <= SSHT2)
+				or (density >= SSLT3 and density <= SSHT3) then
 					data[vi] = c_sastone
 				elseif desert then
 					data[vi] = c_flrdestone
@@ -347,9 +354,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					else -- else surface nodes
 						local tree = false
 						local treedir
-						if math.random(TCHA) == 2 then
+						if (deforest and math.random(ATCHA) == 2)
+						or (taiga and math.random(PTCHA) == 2)
+						or (savanna and math.random(STCHA) == 2)
+						or (raforest and math.random(JTCHA) == 2) then
 							if density <= TRET -- surface node, links trees to soil depth
-							-- and noise2 >= -0.8 and noise2 <= 0
 							and x-x0 >= 1 and x1 - x >= 1
 							and y-y0 >= 1 and y1 - y >= 1
 							and z-z0 >= 1 and z1 - z >= 1 then
@@ -408,11 +417,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 								data[vi] = c_flrdrygrass
 							end
 						elseif raforest then
-							--if tree then
-								--flexrealm_jungletree(x, y, z, treedir, area, data, c_tree, c_flrjunleaf)
-							--else
+							if tree then
+								flexrealm_jungletree(x, y, z, treedir, area, data, c_juntree, c_flrjunleaf)
+							else
 								data[vi] = c_flrgrass
-							--end
+							end
 						elseif drygrass then
 							data[vi] = c_flrdrygrass
 						elseif wetgrass then
