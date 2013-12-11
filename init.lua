@@ -1,20 +1,40 @@
--- flexrealm 0.2.2 by paramat
+-- flexrealm 0.2.3 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
 -- Variables
 
-local XMIN = -33000 -- Approximate limits
+local flex = false -- 3D noise flexy realm
+local flat = true -- normal flat realm
+local vert = false -- vertical flat realm
+local invert = false -- inverted flat realm
+local sphere = false -- dyson sphere
+
+local XMIN = -33000 -- Limits for all realm types
 local XMAX = 33000
 local YMIN = -32
 local YMAX = 33000
 local ZMIN = -33000
 local ZMAX = 33000
 
-local GFAC = 10 --  -- Density gradient factor (noise4 multiplier). Reduce for higher hills
+-- Flexy realm
+local GFAC = 10 -- Density gradient factor (noise4 multiplier). Reduce for higher hills
 
--- Large scale density field grad = noise4 * GFAC
+local TERRS = 96 -- Terrain scale for all realms below
+-- Normal flat realm
+local FLATY = 5000 -- Surface y
+-- Vertical flat realm facing south
+local VERTZ = 0 -- Surface z
+-- Inverted flat realm
+local INVEY = 5000 -- Surface y
+-- Dyson sphere
+local SPHEX = 0 -- 
+local SPHEZ = 0 -- 
+local SPHEY = 15000 -- 
+local SPHER = 10000 -- 
+
+-- Large scale density field 'grad'
 local ICET = 0.05 --  -- Ice density threshold
 local SANT = -0.05 --  -- Beach top density threshold
 local SANR = -0.02 --  -- Beach top density threshold randomness
@@ -23,7 +43,7 @@ local ROCK = -0.5 --  -- Rocky terrain density threshold
 local CLLT = -1 --  -- Cloud low density threshold
 local CLHT = -0.995 --  -- Cloud high density threshold
 
--- Terrain density field
+-- Terrain density field 'density = terno + grad'
 local DEPT = 1.5 --  -- Realm depth density threshold
 local SSLT1 = 0.20 --  -- Sandstone strata low density threshold1
 local SSHT1 = 0.25 --  -- Sandstone strata high density threshold1
@@ -252,6 +272,31 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	for x = x0, x1 do -- for each node do
 		local vi = area:index(x, y, z) -- LVM index for node
 		local nodid = data[vi] -- node
+		
+		local terno
+		local grad
+		local noise6 = nvals6[ni] -- faults
+		local terblen = math.min(math.abs(nvals8[ni]) * 2, 1) -- terrain blend with smooth
+		if noise6 > 0 then
+			terno = (nvals1[ni] + nvals5[ni]) / 2 * (1 - terblen) + nvals7[ni] * terblen
+		else
+			terno = (nvals1[ni] - nvals5[ni]) / 2 * (1 - terblen) - nvals7[ni] * terblen
+		end
+		if flex then
+			local noise4 = nvals4[ni]
+			grad = noise4 * GFAC
+		elseif flat then
+			grad = (FLATY - y) / TERRS
+		elseif vert then
+			grad = (VERTZ - z) / TERRS
+		elseif invert then
+			grad = (INVEY - y) / TERRS
+		elseif sphere then
+			local nodrad = ((x - SPHEX) ^ 2 + (y - SPHEY) ^ 2 + (z - SPHEZ) ^ 2) ^ 0.5
+			grad = (nodrad - SPHER) / TERRS
+		end
+		local density = terno + grad -- terrain density field
+		
 		local desert = false -- desert biome
 		local savanna = false -- savanna biome
 		local raforest = false -- rainforest biome
@@ -260,23 +305,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local deforest = false -- deciduous forest biome
 		local tundra = false -- tundra biome
 		local taiga = false -- taiga forest biome
-		local nofis
-		
-		local terno -- terrain noise
-		local noise6 = nvals6[ni] -- faults
-		local terblen = math.min(math.abs(nvals8[ni]) * 2, 1) -- terrain blend with smooth
-		if noise6 > 0 then
-			terno = (nvals1[ni] + nvals5[ni]) / 2 * (1 - terblen) + nvals7[ni] * terblen
-		else
-			terno = (nvals1[ni] - nvals5[ni]) / 2 * (1 - terblen) - nvals7[ni] * terblen
-		end
-		local noise4 = nvals4[ni]
-		--local grad = noise4 * GFAC -- large scale density field
-		local grad = (168 - y) / 96 -- flat realm for testing, normally disable this line
-		--local nodrad = (x ^ 2 + (y - 15000) ^ 2 + z ^ 2) ^ 0.5 -- sphere realm for testing, normally disable this line
-		--local grad = (nodrad - 10000) / 96 -- sphere realm for testing, normally disable this line
-		local density = terno + grad -- terrain density field
-		
 		if (density > 0 or grad > 0) and density <= DEPT then -- if terrain or water calculate biome
 			local temp = nvals2[ni] + grad
 			local humid = nvals9[ni] + grad
@@ -302,7 +330,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				deforest = true
 			end
 		end
-			
+		
+		local nofis	
 		if density > 0 and density <= DEPT then -- if terrain then set nofis
 			nofis = false
 			if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then -- if no fissure then
