@@ -139,18 +139,6 @@ minetest.register_node("flexrealm:watflow", {
 	inventory_image = minetest.inventorycube("default_water.png"),
 	drawtype = "flowingliquid",
 	tiles = {"default_water.png"},
-	special_tiles = {
-		{
-			image="default_water_flowing_animated.png",
-			backface_culling=false,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=0.8}
-		},
-		{
-			image="default_water_flowing_animated.png",
-			backface_culling=true,
-			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=0.8}
-		},
-	},
 	alpha = WATER_ALPHA,
 	paramtype = "light",
 	paramtype2 = "flowingliquid",

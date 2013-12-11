@@ -1,15 +1,19 @@
--- flexrealm 0.2.3 by paramat
+-- flexrealm 0.2.4 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
+-- TODO
+-- Fog, opaque, rare, low altitude, very high humidity
 
 -- Variables
 
 local flex = false -- 3D noise flexy realm
-local flat = true -- normal flat realm
-local vert = false -- vertical flat realm
+local flat = false -- normal flat realm
+local vert = true -- vertical flat realm
 local invert = false -- inverted flat realm
 local sphere = false -- dyson sphere
+
+local light = true -- layer of light emitting airlike nodes following terrain
 
 local XMIN = -33000 -- Limits for all realm types
 local XMAX = 33000
@@ -38,13 +42,13 @@ local SPHER = 10000 --
 local ICET = 0.05 --  -- Ice density threshold
 local SANT = -0.05 --  -- Beach top density threshold
 local SANR = -0.02 --  -- Beach top density threshold randomness
-local ALIT = -0.05 --  -- Airlike water barrier nodes density threshold
+--local ALIT = -0.05 --  -- Airlike water barrier nodes density threshold
 local ROCK = -0.5 --  -- Rocky terrain density threshold
-local CLLT = -1 --  -- Cloud low density threshold
-local CLHT = -0.995 --  -- Cloud high density threshold
+local CLLT = -0.9 --  -- Cloud low density threshold
+local CLHT = -0.895 --  -- Cloud high density threshold
 
 -- Terrain density field 'density = terno + grad'
-local DEPT = 1.5 --  -- Realm depth density threshold
+local DEPT = 1 --  -- Realm depth density threshold
 local SSLT1 = 0.20 --  -- Sandstone strata low density threshold1
 local SSHT1 = 0.25 --  -- Sandstone strata high density threshold1
 local SSLT2 = 0.30 --  -- Sandstone strata low density threshold2
@@ -54,8 +58,8 @@ local SSHT3 = 0.55 --  -- Sandstone strata high density threshold3
 local STOT = 0.10 --  -- Stone density threshold at sea level
 local DIRT = 0.05 --  -- Dirt density threshold
 local TRET = 0.01 --  -- Tree growth density threshold, links tree density to soil depth
-local LELT = -0.2 --  -- LEAN (Light Emitting Airlike Node) low density threshold
-local LEHT = -0.16 --  -- LEAN high density threshold
+local LELT = -0.18 --  -- LEAN (Light Emitting Airlike Node) low density threshold
+local LEHT = -0.15 --  -- LEAN high density threshold
 
 -- Noise3
 local FITS = 0 --  -- Fissure threshold at surface. Controls size of fissures and amount / size of fissure entrances at surface
@@ -75,7 +79,7 @@ local PTCHA = 36 --  -- Pine tree maximum 1/x chance per snow block
 local STCHA = 529 --  -- Savanna tree maximum 1/x chance per dry grass
 local JTCHA = 25 --  -- Jungle tree maximum 1/x chance per grass
 
-local LINT = 23 --  -- LEAN abm interval
+local LINT = 17 --  -- LEAN abm interval
 local LCHA = 32*32 --  -- LEAN abm 1/x chance
 
 -- Noise parameters
@@ -232,7 +236,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_stocoal = minetest.get_content_id("default:stone_with_coal")
 	local c_cactus = minetest.get_content_id("default:cactus")
 	local c_dirt = minetest.get_content_id("default:dirt")
-	local c_watsource = minetest.get_content_id("default:water_source")
 	local c_apple = minetest.get_content_id("default:apple")
 	local c_leaves = minetest.get_content_id("default:leaves")
 	local c_tree = minetest.get_content_id("default:tree")
@@ -255,6 +258,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrperfrost = minetest.get_content_id("flexrealm:perfrost")
 	local c_flrsavleaf = minetest.get_content_id("flexrealm:savleaf")
 	local c_flrjunleaf = minetest.get_content_id("flexrealm:junleaf")
+	local c_flrwatsour = minetest.get_content_id("flexrealm:watsour")
 	
 	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals2 = minetest.get_perlin_map(np_temp, chulens):get3dMap_flat(minpos)
@@ -288,9 +292,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		elseif flat then
 			grad = (FLATY - y) / TERRS
 		elseif vert then
-			grad = (VERTZ - z) / TERRS
+			grad = (z - VERTZ) / TERRS
 		elseif invert then
-			grad = (INVEY - y) / TERRS
+			grad = (y - INVEY) / TERRS
 		elseif sphere then
 			local nodrad = ((x - SPHEX) ^ 2 + (y - SPHEY) ^ 2 + (z - SPHEZ) ^ 2) ^ 0.5
 			grad = (nodrad - SPHER) / TERRS
@@ -339,7 +343,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			end
 		end
 		
-		if grad >= CLLT and density <= DEPT then -- if realm then
+		if grad >= -1 and density <= DEPT then -- if realm then
 			local stot = STOT * (1 - grad / ROCK)
 			if density >= stot and density <= DEPT and nofis then -- stone cut by fissures
 				if (density >= SSLT1 and density <= SSHT1)
@@ -395,36 +399,44 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							end
 						end
 						if tree then
-							treedir = 6
-							local nxp = nvals4[ni + 1] -- x positive, direction 1
-							local nxn = nvals4[ni - 1] -- x negative, 2
-							local nyp = nvals4[ni + 80] -- 3
-							local nyn = nvals4[ni - 80] -- 4
-							local nzp = nvals4[ni + 6400] -- 5
-							local nzn = nvals4[ni - 6400] -- 6
-							local nlo = nzn
-							if nxp < nlo then
-								treedir = 1
-								nlo = nxp
-							end
-							if nxn < nlo then
-								treedir = 2
-								nlo = nxn
-							end
-							if nyp < nlo then
+							if flat then
 								treedir = 3
-								nlo = nyp
-							end
-							if nyn < nlo then
-								treedir = 4
-								nlo = nyn
-							end
-							if nzp < nlo then
-								treedir = 5
-								nlo = nzp
-							end
-							if nzn < nlo then
+							elseif vert then
 								treedir = 6
+							elseif invert then
+								treedir = 4
+							else
+								treedir = 6
+								local nxp = nvals4[ni + 1] -- 1 east
+								local nxn = nvals4[ni - 1] -- 2 west
+								local nyp = nvals4[ni + 80] -- 3 up
+								local nyn = nvals4[ni - 80] -- 4 down
+								local nzp = nvals4[ni + 6400] -- 5 north
+								local nzn = nvals4[ni - 6400] -- 6 south
+								local nlo = nzn
+								if nxp < nlo then
+									treedir = 1
+									nlo = nxp
+								end
+								if nxn < nlo then
+									treedir = 2
+									nlo = nxn
+								end
+								if nyp < nlo then
+									treedir = 3
+									nlo = nyp
+								end
+								if nyn < nlo then
+									treedir = 4
+									nlo = nyn
+								end
+								if nzp < nlo then
+									treedir = 5
+									nlo = nzp
+								end
+								if nzn < nlo then
+									treedir = 6
+								end
 							end
 						end
 						if taiga then
@@ -468,19 +480,15 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				end
 			elseif grad > 0 and density < 0 then
 				if nodid == c_air then
-					data[vi] = c_watsource
+					data[vi] = c_flrwatsour
 				end
-			elseif grad >= ALIT and grad <= 0 and density < 0 then
-				if nodid == c_air then
-					data[vi] = c_flrairlike
-				end
-			elseif not nofis and grad >= ALIT and density > 0 and density < DEPT and math.abs(noise6) < 0.05 then
+			elseif not nofis and grad >= SANT and density > 0 and density < DEPT and math.abs(noise6) < 0.05 then
 				data[vi] = c_flrsand -- sand blocking fissures in cliffs below water level
-			elseif density >= LELT and density <= LEHT then
+			elseif light and density >= LELT and density <= LEHT then
 				if nodid == c_air then
 					data[vi] = c_flrleanoff
 				end
-			elseif grad >= CLLT and grad <= CLHT and ((density >= -1.1 and density <= -1.05) or (density >= -0.95 and density <= -0.9)) then
+			elseif grad >= CLLT and grad <= CLHT and ((density >= -1.1 and density <= -1.07) or (density >= -0.93 and density <= -0.9)) then
 				if nodid == c_air then
 					data[vi] = c_flrcloud
 				end

@@ -1,5 +1,4 @@
 function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
-	treedir = 3 -- y+ for testing
 	if treedir == 1 then
 		for i = 0, 5 do
 			if i >= 3 and i <= 5 then
@@ -106,7 +105,6 @@ function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_a
 end
 
 function flexrealm_pinetree(x, y, z, treedir, area, data, c_tree, c_flrneedles, c_snowblock)
-	treedir = 3 -- y+ for testing
 	if treedir == 1 then
 		for i = -2, 11 do
 		for j = -1, 1 do
@@ -369,7 +367,6 @@ function flexrealm_pinetree(x, y, z, treedir, area, data, c_tree, c_flrneedles, 
 end
 
 function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
-	treedir = 3 -- y+ for testing
 	if treedir == 1 then
 		for i = 0, 6 do
 			if i >= 5 then
@@ -464,7 +461,6 @@ function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavlea
 end
 
 function flexrealm_jungletree(x, y, z, treedir, area, data, c_juntree, c_flrjunleaf)
-	treedir = 3 -- y+ for testing
 	if treedir == 1 then
 		for i = -4, 17 do
 			if i == 11 or i == 17 then
