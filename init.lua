@@ -1,9 +1,10 @@
--- flexrealm 0.2.5 by paramat
+-- flexrealm 0.2.6 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 -- TODO
 -- Thick fog, opaque, rare, low altitude, very high humidity
+-- Surface nodes for tundra?
 
 -- Variables
 
@@ -44,7 +45,7 @@ local SPHER = 10000 --
 local ICET = 0.04 --  -- Ice density threshold
 local SANT = -0.04 --  -- Beach top density threshold
 local SANR = -0.02 --  -- Beach top density threshold randomness
-local ALIT = -0.04 --  -- Airlike water barrier nodes density threshold
+--local ALIT = -0.04 --  -- Airlike water barrier nodes density threshold
 local ROCK = -0.6 --  -- Rocky terrain density threshold
 local CLLT = -0.9 --  -- Cloud low density threshold
 local CLHT = -0.895 --  -- Cloud high density threshold
@@ -246,7 +247,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_sastone = minetest.get_content_id("default:sandstone")
 	local c_needles = minetest.get_content_id("default:needles")
 	local c_juntree = minetest.get_content_id("default:jungletree")
-	local c_watsour = minetest.get_content_id("default:water_source")
+	--local c_watsour = minetest.get_content_id("default:water_source")
 	
 	local c_flrairlike = minetest.get_content_id("flexrealm:airlike")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
@@ -261,6 +262,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrperfrost = minetest.get_content_id("flexrealm:perfrost")
 	local c_flrsavleaf = minetest.get_content_id("flexrealm:savleaf")
 	local c_flrjunleaf = minetest.get_content_id("flexrealm:junleaf")
+	local c_flrwatsour = minetest.get_content_id("flexrealm:watsour")
 	
 	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals2 = minetest.get_perlin_map(np_temp, chulens):get3dMap_flat(minpos)
@@ -383,6 +385,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					if density >= DIRT then
 						if desert then
 							data[vi] = c_flrdesand
+						elseif tundra then
+							data[vi] = c_flrperfrost
 						else
 							data[vi] = c_dirt
 						end
@@ -459,7 +463,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						elseif wetgrass then
 							data[vi] = c_flrgrass
 						elseif tundra then
-							data[vi] = c_flrperfrost
+							data[vi] = c_flrdrygrass
 						elseif desert then
 							data[vi] = c_flrdesand
 						end
@@ -471,12 +475,12 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				end
 			elseif grad > 0 and density < 0 then
 				if nodid == c_air then
-					data[vi] = c_watsour
+					data[vi] = c_flrwatsour
 				end
-			elseif grad >= ALIT and grad <= 0 and density < 0 then
-				if nodid == c_air then
-					data[vi] = c_flrairlike
-				end
+			--elseif not flat and grad >= ALIT and grad <= 0 and density < 0 then
+				--if nodid == c_air then
+					--data[vi] = c_flrairlike
+				--end
 			elseif not nofis and grad >= SANT and density > 0 and density < DEPT and math.abs(noise6) < 0.05 then
 				data[vi] = c_flrsand -- sand blocking fissures in cliffs below water level
 			elseif light and density >= LELT and density <= LEHT then
