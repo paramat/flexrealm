@@ -43,6 +43,16 @@ minetest.register_node("flexrealm:grass", {
 	}),
 })
 
+minetest.register_node("flexrealm:frograss", {
+	description = "FLR Frosty Grass",
+	tiles = {"flexrealm_frograss.png"},
+	groups = {crumbly=2},
+	drop = "default:dirt",
+	sounds = default.node_sound_dirt_defaults({
+		footstep = {name="default_grass_footstep", gain=0.6},
+	}),
+})
+
 minetest.register_node("flexrealm:sand", {
 	description = "FLR Sand",
 	tiles = {"default_sand.png"},

@@ -1,20 +1,24 @@
--- flexrealm 0.2.6 by paramat
+-- flexrealm 0.2.7 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 -- TODO
 -- Thick fog, opaque, rare, low altitude, very high humidity
--- Surface nodes for tundra?
+-- Papyrus and swamp
+-- Cone
 
 -- Variables
 
-local flex = true -- 3D noise flexy realm
-local flat = false -- normal flat realm
-local vert = false -- vertical flat realm
-local invert = false -- inverted flat realm
-local sphere = false -- dyson sphere
+local flex = false -- 3D noise flexy realm
+local flat = false -- Normal flat realm
+local vertical = false -- Vertical flat realm facing south
+local invert = false -- Inverted flat realm
+local sphere = false -- Dyson sphere
+local planet = false -- Planet sphere
+--local cone = false -- Conical mountain
+local cylinder = true -- East-West tube world
 
-local light = true -- layer of light emitting airlike nodes following terrain
+local light = true -- Layer of light emitting airlike nodes following terrain
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
@@ -29,18 +33,21 @@ local limit = {
 local GFAC = 10 -- Density gradient factor (noise4 multiplier). Reduce for higher hills
 
 local TERRS = 96 -- Terrain scale for all realms below
--- Normal flat realm
+-- Normal and inverted flat realms
 local FLATY = 5000 -- Surface y
 -- Vertical flat realm facing south
 local VERTZ = 0 -- Surface z
--- Inverted flat realm
-local INVEY = 5000 -- Surface y
--- Dyson sphere
-local SPHEX = 0 -- 
-local SPHEZ = 0 -- 
-local SPHEY = 15000 -- 
-local SPHER = 10000 -- 
-
+-- Dyson sphere and planet
+local sphpa = {
+	SPHEX = 0, -- Centre x
+	SPHEZ = 0, -- ..z
+	SPHEY = 15000, -- ..y 
+	SPHER = 10000, -- Surface radius
+}
+-- Cylinder
+local CYLZ = 0 -- Axis z
+local CYLY = 5500 -- ..y 
+local CYLR = 512 -- Surface radius
 -- Large scale density field 'grad'
 local ICET = 0.04 --  -- Ice density threshold
 local SANT = -0.04 --  -- Beach top density threshold
@@ -61,26 +68,29 @@ local SSHT3 = 0.55 --  -- Sandstone strata high density threshold3
 local STOT = 0.10 --  -- Stone density threshold at sea level
 local DIRT = 0.05 --  -- Dirt density threshold
 local TRET = 0.01 --  -- Tree growth density threshold, links tree density to soil depth
-local LELT = -0.18 --  -- LEAN (Light Emitting Airlike Node) low density threshold
-local LEHT = -0.15 --  -- LEAN high density threshold
+local LELT = -0.22 --  -- LEAN (Light Emitting Airlike Node) low density threshold
+local LEHT = -0.18 --  -- LEAN high density threshold
 
--- Noise3
 local FITS = 0 --  -- Fissure threshold at surface. Controls size of fissures and amount / size of fissure entrances at surface
 local FEXP = 0.1 --  -- Fissure expansion rate under surface
 
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
 
--- Noise2 and noise9
-local HTET = 0 --  -- Desert / savanna / rainforest temperature noise threshold.
-local LTET = -0.6 --  -- Tundra / taiga temperature noise threshold.
-local HWET = 0 --  -- Wet grassland / rainforest wetness noise threshold.
-local LWET = -0.6 --  -- Tundra / dry grassland / desert wetness noise threshold.
-local BIOR = 0.05 --  -- Biome noise randomness for blend dithering
+local HTET = 0.1 --  -- Desert / savanna / rainforest temperature noise threshold.
+local LTET = -0.5 --  -- Tundra / taiga temperature noise threshold.
+local HWET = 0.1 --  -- Wet grassland / rainforest wetness noise threshold.
+local LWET = -0.5 --  -- Tundra / dry grassland / desert wetness noise threshold.
+local BIOR = 0.03 --  -- Biome noise randomness for blend dithering
 
-local ATCHA = 49 --  -- Apple tree maximum 1/x chance per grass
-local PTCHA = 36 --  -- Pine tree maximum 1/x chance per snow block
-local STCHA = 529 --  -- Savanna tree maximum 1/x chance per dry grass
-local JTCHA = 25 --  -- Jungle tree maximum 1/x chance per grass
+local ATCHA = 49 --  -- Apple tree maximum 1/x chance per surface node
+local PTCHA = 49 --  -- Pine tree maximum 1/x chance per surface node
+local STCHA = 529 --  -- Savanna tree maximum 1/x chance per surface node
+local JTCHA = 25 --  -- Jungle tree maximum 1/x chance per surface node
+
+local DEGRACHA = 9 --  -- Grass 1/x chance per surface node
+local SAGRACHA = 5 --  -- Savanna grass 1/x chance per surface node
+local DRYGRACHA = 3 --  -- Dry grassland grass 1/x chance per surface node
+local WETGRACHA = 3 --  -- Wet grassland grass 1/x chance per surface node
 
 local LINT = 17 --  -- LEAN abm interval
 local LCHA = 32*32 --  -- LEAN abm 1/x chance
@@ -247,6 +257,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_sastone = minetest.get_content_id("default:sandstone")
 	local c_needles = minetest.get_content_id("default:needles")
 	local c_juntree = minetest.get_content_id("default:jungletree")
+	local c_jungrass = minetest.get_content_id("default:junglegrass")
+	local c_grass = minetest.get_content_id("default:grass_5")
+	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
 	--local c_watsour = minetest.get_content_id("default:water_source")
 	
 	local c_flrairlike = minetest.get_content_id("flexrealm:airlike")
@@ -259,6 +272,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrcloud = minetest.get_content_id("flexrealm:cloud")
 	local c_flrneedles = minetest.get_content_id("flexrealm:needles")
 	local c_flrdrygrass = minetest.get_content_id("flexrealm:drygrass")
+	local c_flrfrograss = minetest.get_content_id("flexrealm:frograss")
 	local c_flrperfrost = minetest.get_content_id("flexrealm:perfrost")
 	local c_flrsavleaf = minetest.get_content_id("flexrealm:savleaf")
 	local c_flrjunleaf = minetest.get_content_id("flexrealm:junleaf")
@@ -277,8 +291,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local ni = 1
 	for z = z0, z1 do
 	for y = y0, y1 do
+	local vi = area:index(x0, y, z) -- LVM index for first node in x row
 	for x = x0, x1 do -- for each node do
-		local vi = area:index(x, y, z) -- LVM index for node
 		local nodid = data[vi] -- node
 		
 		local terno
@@ -295,59 +309,67 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			grad = noise4 * GFAC
 		elseif flat then
 			grad = (FLATY - y) / TERRS
-		elseif vert then
+		elseif vertical then
 			grad = (z - VERTZ) / TERRS
 		elseif invert then
-			grad = (y - INVEY) / TERRS
-		elseif sphere then
-			local nodrad = ((x - SPHEX) ^ 2 + (y - SPHEY) ^ 2 + (z - SPHEZ) ^ 2) ^ 0.5
-			grad = (nodrad - SPHER) / TERRS
+			grad = (y - FLATY) / TERRS
+		elseif sphere or planet then
+			local nodrad = math.sqrt((x - sphpa.SPHEX) ^ 2 + (y - sphpa.SPHEY) ^ 2 + (z - sphpa.SPHEZ) ^ 2)
+			if sphere then
+				grad = (nodrad - sphpa.SPHER) / TERRS
+			else -- planet
+				grad = (sphpa.SPHER - nodrad) / TERRS
+			end
+		
+		elseif cylinder then
+			local nodrad = math.sqrt((y - CYLY) ^ 2 + (z - CYLZ) ^ 2)
+			grad = (nodrad - CYLR) / TERRS
 		end
 		local density = terno + grad -- terrain density field
 		
-		local desert = false -- desert biome
-		local savanna = false -- savanna biome
-		local raforest = false -- rainforest biome
-		local wetgrass = false -- wet grassland biome
-		local drygrass = false -- dry grassland biome
-		local deforest = false -- deciduous forest biome
-		local tundra = false -- tundra biome
-		local taiga = false -- taiga forest biome
-		if (density > 0 or grad > 0) and density <= DEPT then -- if terrain or water calculate biome
-			local temp = nvals2[ni] + grad
-			local humid = nvals9[ni] + grad
-			if temp > HTET + (math.random() - 0.5) * BIOR then
-				if humid > HWET + (math.random() - 0.5) * BIOR then
-					raforest = true
-				elseif humid < LWET + (math.random() - 0.5) * BIOR then
-					desert = true
-				else
-					savanna = true
-				end
-			elseif temp < LTET + (math.random() - 0.5) * BIOR then
-				if humid < LWET + (math.random() - 0.5) * BIOR then
-					tundra = true
-				else
-					taiga = true
-				end
-			elseif humid > HWET + (math.random() - 0.5) * BIOR then
-				wetgrass = true
-			elseif humid < LWET + (math.random() - 0.5) * BIOR then
-				drygrass = true
-			else
-				deforest = true
-			end
-		end
-		
-		local nofis	
-		if density > 0 and density <= DEPT then -- if terrain then set nofis
-			nofis = false
-			if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then -- if no fissure then
-				nofis = true
-			end
-		end
-		
 		if grad >= -1 and density <= DEPT then -- if realm then
+		
+			local desert = false -- desert biome
+			local savanna = false -- savanna biome
+			local raforest = false -- rainforest biome
+			local wetgrass = false -- wet grassland biome
+			local drygrass = false -- dry grassland biome
+			local deforest = false -- deciduous forest biome
+			local tundra = false -- tundra biome
+			local taiga = false -- taiga forest biome
+			if density > 0 or grad > 0 then -- if terrain or water calculate biome
+				local temp = nvals2[ni] + grad
+				local humid = nvals9[ni] + grad
+				if temp > HTET + (math.random() - 0.5) * BIOR then
+					if humid > HWET + (math.random() - 0.5) * BIOR then
+						raforest = true
+					elseif humid < LWET + (math.random() - 0.5) * BIOR then
+						desert = true
+					else
+						savanna = true
+					end
+				elseif temp < LTET + (math.random() - 0.5) * BIOR then
+					if humid < LWET + (math.random() - 0.5) * BIOR then
+						tundra = true
+					else
+						taiga = true
+					end
+				elseif humid > HWET + (math.random() - 0.5) * BIOR then
+					wetgrass = true
+				elseif humid < LWET + (math.random() - 0.5) * BIOR then
+					drygrass = true
+				else
+					deforest = true
+				end
+			end
+		
+			local nofis = false
+			if density > 0 then -- if terrain then set nofis
+				if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then -- if no fissure then
+					nofis = true
+				end
+			end
+			
 			local stot = STOT * (1 - grad / ROCK)
 			if density >= stot and density <= DEPT and nofis then -- stone cut by fissures
 				if (density >= SSLT1 and density <= SSHT1)
@@ -393,25 +415,18 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					else -- else surface nodes
 						local tree = false
 						local treedir
-						if (deforest and math.random(ATCHA) == 2)
-						or (taiga and math.random(PTCHA) == 2)
-						or (savanna and math.random(STCHA) == 2)
-						or (raforest and math.random(JTCHA) == 2) then
-							if density <= TRET -- surface node, links trees to soil depth
-							and x-x0 >= 1 and x1 - x >= 1
-							and y-y0 >= 1 and y1 - y >= 1
-							and z-z0 >= 1 and z1 - z >= 1 then
-								tree = true
-							end
+						if density <= TRET -- surface node, links trees to soil depth
+						and x-x0 >= 1 and x1 - x >= 1
+						and y-y0 >= 1 and y1 - y >= 1
+						and z-z0 >= 1 and z1 - z >= 1 then
+							tree = true
 						end
 						if tree then
-							if flat or sphere then
-								treedir = 3
-							elseif vert then
+							if vertical then
 								treedir = 6
 							elseif invert then
 								treedir = 4
-							else -- flexy realm
+							elseif flex then
 								local nxp = nvals4[ni + 1] -- 1 east
 								local nxn = nvals4[ni - 1] -- 2 west
 								local nyp = nvals4[ni + 80] -- 3 up
@@ -432,38 +447,56 @@ minetest.register_on_generated(function(minp, maxp, seed)
 								else
 									treedir = 6
 								end
+							else -- all other realms, for now hacky up is fine for half of sphere, planet, cylinder
+								treedir = 3 -- Up
 							end
 						end
 						if taiga then
-							if tree then
+							if tree and math.random(PTCHA) == 2 then
 								flexrealm_pinetree(x, y, z, treedir, area, data, c_tree, c_flrneedles, c_snowblock)
 							else
 								data[vi] = c_snowblock
 							end
 						elseif deforest then
 							if tree then
-								flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
+								if math.random(ATCHA) == 2 then
+									flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
+								elseif math.random(DEGRACHA) == 2 then	
+									data[vi] = c_flrgrass
+									flexrealm_grass(x, y, z, treedir, area, data, c_grass, vi)
+								end
 							else
 								data[vi] = c_flrgrass
 							end
 						elseif savanna then
 							if tree then
-								flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
+								if math.random(STCHA) == 2 then
+									flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
+								elseif math.random(SAGRACHA) == 2 then	
+									data[vi] = c_flrdrygrass
+									flexrealm_dryshrub(x, y, z, treedir, area, data, c_dryshrub, vi)
+								end
 							else
 								data[vi] = c_flrdrygrass
 							end
 						elseif raforest then
-							if tree then
+							if tree and math.random(JTCHA) == 2 then
 								flexrealm_jungletree(x, y, z, treedir, area, data, c_juntree, c_flrjunleaf)
 							else
 								data[vi] = c_flrgrass
 							end
 						elseif drygrass then
 							data[vi] = c_flrdrygrass
+							if tree and math.random(DRYGRACHA) == 2 then
+								flexrealm_dryshrub(x, y, z, treedir, area, data, c_dryshrub, vi)
+							end
 						elseif wetgrass then
 							data[vi] = c_flrgrass
+							if tree and math.random(WETGRACHA) == 2 then
+								flexrealm_jungrass(x, y, z, treedir, area, data, c_jungrass, vi)
+							end
 						elseif tundra then
-							data[vi] = c_flrdrygrass
+							data[vi] = c_flrfrograss
 						elseif desert then
 							data[vi] = c_flrdesand
 						end
@@ -494,6 +527,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			end
 		end
 		ni = ni + 1
+		vi = vi + 1
 	end
 	end
 	end

@@ -553,3 +553,64 @@ function flexrealm_jungletree(x, y, z, treedir, area, data, c_juntree, c_flrjunl
 		end
 	end
 end
+
+function flexrealm_grass(x, y, z, treedir, area, data, c_grass, vi)
+	if treedir == 1 then
+		data[vi + 1] = c_grass
+	elseif treedir == 2 then
+		data[vi - 1] = c_grass
+	elseif treedir == 3 then	
+		local via = area:index(x , y + 1, z)
+		data[via] = c_grass
+	elseif treedir == 4 then
+		local via = area:index(x , y - 1, z)
+		data[via] = c_grass
+	elseif treedir == 5 then
+		local via = area:index(x , y , z + 1)
+		data[via] = c_grass
+	elseif treedir == 6 then
+		local via = area:index(x , y , z - 1)
+		data[via] = c_grass
+	end
+end
+
+
+function flexrealm_dryshrub(x, y, z, treedir, area, data, c_dryshrub, vi)
+	if treedir == 1 then
+		data[vi + 1] = c_dryshrub
+	elseif treedir == 2 then
+		data[vi - 1] = c_dryshrub
+	elseif treedir == 3 then	
+		local via = area:index(x , y + 1, z)
+		data[via] = c_dryshrub
+	elseif treedir == 4 then
+		local via = area:index(x , y - 1, z)
+		data[via] = c_dryshrub
+	elseif treedir == 5 then
+		local via = area:index(x , y , z + 1)
+		data[via] = c_dryshrub
+	elseif treedir == 6 then
+		local via = area:index(x , y , z - 1)
+		data[via] = c_dryshrub
+	end
+end
+
+function flexrealm_jungrass(x, y, z, treedir, area, data, c_jungrass, vi)
+	if treedir == 1 then
+		data[vi + 1] = c_jungrass
+	elseif treedir == 2 then
+		data[vi - 1] = c_jungrass
+	elseif treedir == 3 then	
+		local via = area:index(x , y + 1, z)
+		data[via] = c_jungrass
+	elseif treedir == 4 then
+		local via = area:index(x , y - 1, z)
+		data[via] = c_jungrass
+	elseif treedir == 5 then
+		local via = area:index(x , y , z + 1)
+		data[via] = c_jungrass
+	elseif treedir == 6 then
+		local via = area:index(x , y , z - 1)
+		data[via] = c_jungrass
+	end
+end
