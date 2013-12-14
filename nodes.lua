@@ -1,14 +1,3 @@
-minetest.register_node("flexrealm:airlike", {
-	description = "FLR airlike",
-	drawtype = "airlike",
-	paramtype = "light",
-	sunlight_propagates = true,
-	walkable = false,
-	pointable = false,
-	diggable = false,
-	groups = {not_in_creative_inventory=1},
-})
-
 minetest.register_node("flexrealm:lean", {
 	description = "FLR LEAN",
 	drawtype = "airlike",
