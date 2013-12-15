@@ -1,11 +1,7 @@
--- flexrealm 0.2.8 by paramat
+-- flexrealm 0.2.9 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
--- TODO?
--- Thick fog, opaque, rare, low altitude, very high humidity
--- Papyrus and swampwater
--- Glacier
 
 -- Variables
 
@@ -13,11 +9,12 @@ local flex = false -- 3D noise flexy realm
 local flat = true -- Normal flat realm
 local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
-local sphere = false -- Dyson sphere
+local dyson = false -- Dyson sphere
 local planet = false -- Planet sphere
-local cylinder = false -- East-West tube world
+local tube = false -- East-West tube world
 
 local light = false -- Layer of light emitting airlike nodes following terrain
+local noflow = false -- Use no-flow water to avoid massive waterfalls
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
@@ -33,18 +30,18 @@ local GFAC = 10 -- Density gradient factor (noise4 multiplier). Reduce for highe
 
 local TERRS = 96 -- Terrain scale for all realms below
 -- Normal and inverted flat realms
-local FLATY = 5000 -- Surface y
+local FLATY = 5048 -- Surface y
 -- Vertical flat realm facing south
 local VERTZ = 0 -- Surface z
 -- Dyson sphere and planet
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
-local SPHEY = 15000 -- ..y 
+local SPHEY = 15048 -- ..y 
 local SPHER = 10000 -- Surface radius
 -- Cylinder
 local CYLZ = 0 -- Axis z
-local CYLY = 5500 -- ..y 
-local CYLR = 512 -- Surface radius
+local CYLY = 5548 -- ..y 
+local CYLR = 500 -- Surface radius
 -- Large scale density field 'grad'
 local ICET = 0.04 --  -- Ice density threshold
 local SANT = -0.04 --  -- Beach top density threshold
@@ -67,7 +64,7 @@ local TRET = 0.01 --  -- Tree growth density threshold, links tree density to so
 local LELT = -0.22 --  -- LEAN (Light Emitting Airlike Node) low density threshold
 local LEHT = -0.18 --  -- LEAN high density threshold
 
-local FITS = 0 --  -- Fissure threshold at surface. Controls size of fissures and amount / size of fissure entrances at surface
+local FITS = 0 --  -- Fissure threshold at surface. Controls size of fissure entrances at surface
 local FEXP = 0.1 --  -- Fissure expansion rate under surface
 
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
@@ -101,7 +98,7 @@ local np_terrain = {
 	scale = 1,
 	spread = {x=256, y=256, z=256},
 	seed = 92,
-	octaves = 6,
+	octaves = 5,
 	persist = 0.6
 }
 
@@ -110,7 +107,7 @@ local np_terrain = {
 local np_alter = {
 	offset = 0,
 	scale = 1,
-	spread = {x=207, y=207, z=207},
+	spread = {x=414, y=414, z=414},
 	seed = -3911,
 	octaves = 6,
 	persist = 0.6
@@ -156,7 +153,7 @@ local np_temp = {
 	scale = 1,
 	spread = {x=512, y=512, z=512},
 	seed = 9130,
-	octaves = 2,
+	octaves = 1,
 	persist = 0.5
 }
 
@@ -167,7 +164,7 @@ local np_humid = {
 	scale = 1,
 	spread = {x=512, y=512, z=512},
 	seed = -55500,
-	octaves = 2,
+	octaves = 1,
 	persist = 0.5
 }
 
@@ -255,6 +252,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_jungrass = minetest.get_content_id("default:junglegrass")
 	local c_grass = minetest.get_content_id("default:grass_4")
 	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
+	local c_watsour = minetest.get_content_id("default:water_source")
 	
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
 	local c_flrsand = minetest.get_content_id("flexrealm:sand")
@@ -306,15 +304,15 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			grad = (z - VERTZ) / TERRS
 		elseif invert then
 			grad = (y - FLATY) / TERRS
-		elseif sphere or planet then
+		elseif dyson or planet then
 			local nodrad = math.sqrt((x - SPHEX) ^ 2 + (y - SPHEY) ^ 2 + (z - SPHEZ) ^ 2)
-			if sphere then
+			if dyson then
 				grad = (nodrad - SPHER) / TERRS
 			else -- planet
 				grad = (SPHER - nodrad) / TERRS
 			end
 		
-		elseif cylinder then
+		elseif tube then
 			local nodrad = math.sqrt((y - CYLY) ^ 2 + (z - CYLZ) ^ 2)
 			grad = (nodrad - CYLR) / TERRS
 		end
@@ -358,23 +356,33 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		
 			local nofis = false
 			if density > 0 then -- if terrain then set nofis
-				if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then -- if no fissure then
+				if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then
 					nofis = true
 				end
 			end
 			
 			local stot = STOT * (1 - grad / ROCK) -- thin surface materials with altitude
 			
-			if math.abs(noise6) < 0.03 * (1 - density / 0.4) and grad < 0.1 and (density > 0 or grad > 0) then -- rivers
-				if density >= 0.3 then
+			local noise6abs = math.abs(noise6) -- rivers
+			if noise6abs <= 0.03 * (1 - (density / 0.25) ^ 2)
+			and grad <= 0.12 and (density > 0 or grad > 0) then
+				if grad > 0.1 and density > 0 then
 					data[vi] = c_flrsand
 				elseif density >= 0.1 or grad > 0 then
 					if tundra or taiga then
 						data[vi] = c_ice
 					else
-						data[vi] = c_flrwatsour
+						if noflow then
+							data[vi] = c_flrwatsour
+						else
+							data[vi] = c_watsour
+						end
 					end
 				end
+			elseif noise6abs > 0.03 * (1 - (density / 0.25) ^ 2) -- riverbed sand
+			and noise6abs <= 0.04 * (1 - (density / 0.3) ^ 2)
+			and grad < 0.12 and density >= 0.1 then
+				data[vi] = c_flrsand
 			elseif density >= stot and density <= DEPT and nofis then -- stone cut by fissures
 				if (density >= SSLT1 and density <= SSHT1)
 				or (density >= SSLT2 and density <= SSHT2)
@@ -382,7 +390,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					data[vi] = c_sastone
 				elseif desert then
 					data[vi] = c_flrdestone
-				elseif math.random(OCHA) == 2 then
+				elseif math.random(OCHA) == 2 then -- ores
 					local osel = math.random(34)
 					if osel == 34 then
 						data[vi] = c_meseblock -- revenge!
@@ -451,7 +459,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 								else
 									treedir = 6
 								end
-							else -- all other realms, for now hacky up is fine for half of sphere, planet, cylinder
+							else -- all other realms, for now hacky up is fine for half of dyson, planet, cylinder
 								treedir = 3 -- Up
 							end
 						end
@@ -506,21 +514,28 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						end
 					end
 				end
-			elseif taiga and grad > 0 and grad <= ICET and density < 0 then
+			elseif taiga and grad > 0 and grad <= ICET and density < 0 then -- ice sheets
 				if nodid == c_air then
 					data[vi] = c_ice
 				end
-			elseif grad > 0 and density < 0 then
+			elseif grad > 0 and density < 0 then -- water
 				if nodid == c_air then
-					data[vi] = c_flrwatsour
+					if noflow then
+						data[vi] = c_flrwatsour
+					else
+						data[vi] = c_watsour
+					end
 				end
-			elseif not nofis and grad >= SANT and density > 0 and density < DEPT and math.abs(noise6) < 0.05 then
-				data[vi] = c_flrsand -- sand blocking fissures in cliffs below water level
-			elseif light and density >= LELT and density <= LEHT then
-				if nodid == c_air then
+			elseif not nofis and grad >= SANT and density > 0 and density < DEPT
+			and ((noise6 > -0.45 and noise6 < -0.35) or (noise6 > 0.35 and noise6 < 0.45)) then
+				data[vi] = c_flrsand -- sand blocking fissures below water level
+			elseif light and density >= LELT and density <= LEHT and math.random(8) == 2 then
+				if nodid == c_air then -- light emitting air nodes
 					data[vi] = c_flrleanoff
 				end
-			elseif grad >= CLLT and grad <= CLHT and ((density >= -1.1 and density <= -1.07) or (density >= -0.93 and density <= -0.9)) then
+			elseif grad >= CLLT and grad <= CLHT
+			and ((density >= -1.1 and density <= -1.07)
+			or (density >= -0.93 and density <= -0.9)) then
 				if nodid == c_air then
 					data[vi] = c_flrcloud
 				end
