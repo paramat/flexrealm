@@ -190,3 +190,23 @@ minetest.register_node("flexrealm:watsour", {
 	post_effect_color = {a=64, r=100, g=100, b=200},
 	groups = {water=3, liquid=3, puts_out_fire=1, freezes=1},
 })
+
+minetest.register_node("flexrealm:swatsour", {
+	description = "FLR Swamp Water Source",
+	inventory_image = minetest.inventorycube("paragenv7_swampwater.png"),
+	--drawtype = "liquid",
+	tiles = {"flexrealm_swatsourtop.png", "flexrealm_swatsour.png"},
+	paramtype = "light",
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	liquidtype = "source",
+	liquid_alternative_flowing = "flexrealm:swatsour",
+	liquid_alternative_source = "flexrealm:swatsour",
+	liquid_viscosity = 1,
+	liquid_renewable = false,
+	liquid_range = 0,
+	post_effect_color = {a=224, r=31, g=56, b=8},
+	groups = {water=3, liquid=3, puts_out_fire=1},
+})

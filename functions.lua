@@ -614,3 +614,23 @@ function flexrealm_jungrass(x, y, z, treedir, area, data, c_jungrass, vi)
 		data[via] = c_jungrass
 	end
 end
+
+function flexrealm_papyrus(x, y, z, treedir, area, data, c_papyrus, vi)
+	if treedir == 1 then
+		data[vi + 1] = c_papyrus
+	elseif treedir == 2 then
+		data[vi - 1] = c_papyrus
+	elseif treedir == 3 then	
+		local via = area:index(x , y + 1, z)
+		data[via] = c_papyrus
+	elseif treedir == 4 then
+		local via = area:index(x , y - 1, z)
+		data[via] = c_papyrus
+	elseif treedir == 5 then
+		local via = area:index(x , y , z + 1)
+		data[via] = c_papyrus
+	elseif treedir == 6 then
+		local via = area:index(x , y , z - 1)
+		data[via] = c_papyrus
+	end
+end
