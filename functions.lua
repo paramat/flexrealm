@@ -1,6 +1,6 @@
 function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
 	if treedir == 1 then
-		for i = 0, 5 do
+		for i = -1, 5 do
 			if i >= 3 and i <= 5 then
 				for j = -2, 2 do
 				for k = -2, 2 do
@@ -17,7 +17,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_a
 			data[vit] = c_tree
 		end
 	elseif treedir == 2 then
-		for i = 0, 5 do
+		for i = -1, 5 do
 			if i >= 3 and i <= 5 then
 				for j = -2, 2 do
 				for k = -2, 2 do
@@ -34,7 +34,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_a
 			data[vit] = c_tree
 		end
 	elseif treedir == 3 then
-		for j = 0, 5 do
+		for j = -1, 5 do
 			if j >= 3 and j <= 5 then
 				for i = -2, 2 do
 				for k = -2, 2 do
@@ -51,7 +51,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_a
 			data[vit] = c_tree
 		end
 	elseif treedir == 4 then
-		for j = 0, 5 do
+		for j = -1, 5 do
 			if j >= 3 and j <= 5 then
 				for i = -2, 2 do
 				for k = -2, 2 do
@@ -68,7 +68,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_a
 			data[vit] = c_tree
 		end
 	elseif treedir == 5 then
-		for k = 0, 5 do
+		for k = -1, 5 do
 			if k >= 3 and k <= 5 then
 				for i = -2, 2 do
 				for j = -2, 2 do
@@ -85,7 +85,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_a
 			data[vit] = c_tree
 		end
 	elseif treedir == 6 then
-		for k = 0, 5 do
+		for k = -1, 5 do
 			if k >= 3 and k <= 5 then
 				for i = -2, 2 do
 				for j = -2, 2 do
@@ -368,7 +368,7 @@ end
 
 function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
 	if treedir == 1 then
-		for i = 0, 6 do
+		for i = -2, 6 do
 			if i >= 5 then
 				for j = -3, 3 do
 				for k = -3, 3 do
@@ -383,7 +383,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavlea
 			data[vit] = c_tree
 		end
 	elseif treedir == 2 then
-		for i = 0, 6 do
+		for i = -2, 6 do
 			if i >= 5 then
 				for j = -3, 3 do
 				for k = -3, 3 do
@@ -398,7 +398,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavlea
 			data[vit] = c_tree
 		end
 	elseif treedir == 3 then
-		for j = 0, 6 do
+		for j = -2, 6 do
 			if j >= 5 then
 				for i = -3, 3 do
 				for k = -3, 3 do
@@ -413,7 +413,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavlea
 			data[vit] = c_tree
 		end
 	elseif treedir == 4 then
-		for j = 0, 6 do
+		for j = -2, 6 do
 			if j >= 5 then
 				for i = -3, 3 do
 				for k = -3, 3 do
@@ -428,7 +428,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavlea
 			data[vit] = c_tree
 		end
 	elseif treedir == 5 then
-		for k = 0, 6 do
+		for k = -2, 6 do
 			if k >= 5 then
 				for i = -3, 3 do
 				for j = -3, 3 do
@@ -443,7 +443,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavlea
 			data[vit] = c_tree
 		end
 	elseif treedir == 6 then
-		for k = 0, 6 do
+		for k = -2, 6 do
 			if k >= 5 then
 				for i = -3, 3 do
 				for j = -3, 3 do
@@ -519,7 +519,7 @@ function flexrealm_jungletree(x, y, z, treedir, area, data, c_juntree, c_flrjunl
 				end
 			end
 			local vit = area:index(x, y - j, z)
-			data[vit] = c_tree
+			data[vit] = c_juntree
 		end
 	elseif treedir == 5 then
 		for k = -4, 17 do

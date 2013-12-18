@@ -1,4 +1,4 @@
--- flexrealm 0.2.9 by paramat
+-- flexrealm 0.2.10 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -6,15 +6,15 @@
 -- Variables
 
 local flex = false -- 3D noise flexy realm
-local flat = true -- Normal flat realm
+local flat = false -- Normal flat realm
 local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
 local dyson = false -- Dyson sphere
-local planet = false -- Planet sphere
+local planet = true -- Planet sphere
 local tube = false -- East-West tube world
 
 local light = false -- Layer of light emitting airlike nodes following terrain
-local noflow = false -- Use no-flow water to avoid massive waterfalls
+local noflow = true -- Use non-flowing water in realms other than 'flat'
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
@@ -33,15 +33,15 @@ local TERRS = 96 -- Terrain scale for all realms below
 local FLATY = 5048 -- Surface y
 -- Vertical flat realm facing south
 local VERTZ = 0 -- Surface z
--- Dyson sphere and planet
+-- Dyson sphere and planet sphere
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
 local SPHEY = 15048 -- ..y 
 local SPHER = 10000 -- Surface radius
 -- Cylinder
 local CYLZ = 0 -- Axis z
-local CYLY = 5548 -- ..y 
-local CYLR = 500 -- Surface radius
+local CYLY = 6048 -- ..y 
+local CYLR = 1000 -- Surface radius
 -- Large scale density field 'grad'
 local ICET = 0.04 --  -- Ice density threshold
 local SANT = -0.04 --  -- Beach top density threshold
@@ -240,7 +240,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_stocopp = minetest.get_content_id("default:stone_with_copper")
 	local c_stoiron = minetest.get_content_id("default:stone_with_iron")
 	local c_stocoal = minetest.get_content_id("default:stone_with_coal")
-	local c_dirt = minetest.get_content_id("default:dirt")
 	local c_apple = minetest.get_content_id("default:apple")
 	local c_leaves = minetest.get_content_id("default:leaves")
 	local c_tree = minetest.get_content_id("default:tree")
@@ -250,10 +249,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_needles = minetest.get_content_id("default:needles")
 	local c_juntree = minetest.get_content_id("default:jungletree")
 	local c_jungrass = minetest.get_content_id("default:junglegrass")
-	local c_grass = minetest.get_content_id("default:grass_4")
+	local c_grass = minetest.get_content_id("default:grass_3")
 	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
 	local c_watsour = minetest.get_content_id("default:water_source")
 	
+	local c_flrdirt = minetest.get_content_id("flexrealm:dirt")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
 	local c_flrsand = minetest.get_content_id("flexrealm:sand")
 	local c_flrdesand = minetest.get_content_id("flexrealm:desand")
@@ -272,7 +272,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals2 = minetest.get_perlin_map(np_temp, chulens):get3dMap_flat(minpos)
 	local nvals3 = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minpos)
-	local nvals4 = minetest.get_perlin_map(np_dengrad, chulens):get3dMap_flat(minpos)
+	if flex then
+		local nvals4 = minetest.get_perlin_map(np_dengrad, chulens):get3dMap_flat(minpos)
+	end
 	local nvals5 = minetest.get_perlin_map(np_alter, chulens):get3dMap_flat(minpos)
 	local nvals6 = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
 	local nvals7 = minetest.get_perlin_map(np_smooth, chulens):get3dMap_flat(minpos)
@@ -361,7 +363,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				end
 			end
 			
-			local stot = STOT * (1 - grad / ROCK) -- thin surface materials with altitude
+			local stot = STOT * (1 - grad / ROCK) -- thin fine materials with altitude
 			
 			local noise6abs = math.abs(noise6) -- rivers
 			if noise6abs <= 0.03 * (1 - (density / 0.25) ^ 2)
@@ -383,7 +385,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			and noise6abs <= 0.04 * (1 - (density / 0.3) ^ 2)
 			and grad < 0.12 and density >= 0.1 then
 				data[vi] = c_flrsand
-			elseif density >= stot and density <= DEPT and nofis then -- stone cut by fissures
+			elseif (density >= stot and density <= DEPT and nofis) then -- stone cut by fissures
 				if (density >= SSLT1 and density <= SSHT1)
 				or (density >= SSLT2 and density <= SSHT2)
 				or (density >= SSLT3 and density <= SSHT3) then
@@ -408,7 +410,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				else
 					data[vi] = c_flrstone
 				end
-			elseif density > 0 and density < stot then -- fine materials not cut by fissures
+			elseif density > 0 and density < stot then -- fine materials
 				if grad >= SANT + (math.random() - 0.5) * SANR then
 					if taiga and density < DIRT and grad <= 0 then -- snowy beach
 						data[vi] = c_snowblock
@@ -422,7 +424,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						elseif tundra then
 							data[vi] = c_flrperfrost
 						else
-							data[vi] = c_dirt
+							data[vi] = c_flrdirt
 						end
 					else -- else surface nodes
 						local tree = false
@@ -434,6 +436,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							tree = true
 						end
 						if tree then
+							local sphedis = SPHER * 0.707 
+							local cyldis = CYLR * 0.707 
 							if vertical then
 								treedir = 6
 							elseif invert then
@@ -459,8 +463,46 @@ minetest.register_on_generated(function(minp, maxp, seed)
 								else
 									treedir = 6
 								end
-							else -- all other realms, for now hacky up is fine for half of dyson, planet, cylinder
-								treedir = 3 -- Up
+							elseif dyson then
+								if SPHEY - y > sphedis then
+									treedir = 3
+								elseif y - SPHEY > sphedis then
+									treedir = 4
+								elseif SPHEX - x > sphedis then
+									treedir = 1
+								elseif x - SPHEX > sphedis then
+									treedir = 2
+								elseif SPHEZ - z  > sphedis then
+									treedir = 5
+								else
+									treedir = 6
+								end
+							elseif planet then
+								if y - SPHEY > sphedis then
+									treedir = 3
+								elseif SPHEY - y > sphedis then
+									treedir = 4
+								elseif x - SPHEX > sphedis then
+									treedir = 1
+								elseif SPHEX - x > sphedis then
+									treedir = 2
+								elseif z - SPHEZ > sphedis then
+									treedir = 5
+								else
+									treedir = 6
+								end
+							elseif tube then
+								if CYLY - y > cyldis then
+									treedir = 3
+								elseif y - CYLY > cyldis then
+									treedir = 4
+								elseif CYLZ - z > cyldis then
+									treedir = 5
+								else
+									treedir = 6
+								end
+							else -- flat realm
+								treedir = 3
 							end
 						end
 						if taiga then
@@ -528,7 +570,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				end
 			elseif not nofis and grad >= SANT and density > 0 and density < DEPT
 			and ((noise6 > -0.45 and noise6 < -0.35) or (noise6 > 0.35 and noise6 < 0.45)) then
-				data[vi] = c_flrsand -- sand blocking fissures below water level
+				data[vi] = c_flrsand -- sand blocking fissures in faults below water level
 			elseif light and density >= LELT and density <= LEHT and math.random(8) == 2 then
 				if nodid == c_air then -- light emitting air nodes
 					data[vi] = c_flrleanoff

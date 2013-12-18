@@ -22,6 +22,15 @@ minetest.register_node("flexrealm:leanoff", {
 	groups = {not_in_creative_inventory=1},
 })
 
+minetest.register_node("flexrealm:dirt", {
+	description = "FLR Dirt",
+	tiles = {"default_dirt.png"},
+	is_ground_content = true,
+	groups = {crumbly=3,soil=1},
+	drop = "default:dirt",
+	sounds = default.node_sound_dirt_defaults(),
+})
+
 minetest.register_node("flexrealm:grass", {
 	description = "FLR Grass",
 	tiles = {"default_grass.png"},
@@ -130,6 +139,7 @@ minetest.register_node("flexrealm:junleaf", {
 	groups = {snappy=3, leafdecay=4, flammable=2, leaves=1},
 	sounds = default.node_sound_leaves_defaults(),
 })
+
 minetest.register_node("flexrealm:watflow", {
 	description = "FLR Flowing Water",
 	inventory_image = minetest.inventorycube("default_water.png"),
