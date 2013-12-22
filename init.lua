@@ -1,4 +1,4 @@
--- flexrealm 0.2.11 by paramat
+-- flexrealm 0.2.12 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -53,7 +53,7 @@ local ROCK = -0.6 --  -- Rocky terrain density threshold
 local CLLT = -0.9 --  -- Cloud low density threshold
 local CLHT = -0.895 --  -- Cloud high density threshold
 -- Terrain density field 'density = terno + grad'
-local DEPT = 1 --  -- Realm depth density threshold
+local DEPT = 2 --  -- Realm depth density threshold
 local SSLT1 = 0.20 --  -- Sandstone strata low density threshold1
 local SSHT1 = 0.25 --  -- Sandstone strata high density threshold1
 local SSLT2 = 0.30 --  -- Sandstone strata low density threshold2
@@ -257,6 +257,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
 	local c_watsour = minetest.get_content_id("default:water_source")
 	local c_papyrus = minetest.get_content_id("default:papyrus")
+	local c_dirt = minetest.get_content_id("default:dirt")
 	
 	local c_flrdirt = minetest.get_content_id("flexrealm:dirt")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
@@ -272,8 +273,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrperfrost = minetest.get_content_id("flexrealm:perfrost")
 	local c_flrsavleaf = minetest.get_content_id("flexrealm:savleaf")
 	local c_flrjunleaf = minetest.get_content_id("flexrealm:junleaf")
-	local c_flrwatsour = minetest.get_content_id("flexrealm:watsour")
-	local c_flrswatsour = minetest.get_content_id("flexrealm:swatsour")
+	local c_flrwatzero = minetest.get_content_id("flexrealm:watzero")
+	local c_flrwatfour = minetest.get_content_id("flexrealm:watfour")
+	local c_flrswatzero = minetest.get_content_id("flexrealm:swatzero")
+	local c_flrswatfour = minetest.get_content_id("flexrealm:swatfour")
 	
 	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals2 = minetest.get_perlin_map(np_temp, chulens):get3dMap_flat(minpos)
@@ -457,14 +460,14 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			and grad <= 0.12 and (density > 0 or grad > 0) then
 				if grad > 0.1 and density > 0 then
 					data[vi] = c_flrsand
-				elseif density >= 0.1 or grad > 0 then
+				elseif (density >= 0.1 and not desert) or grad > 0 then -- dry river in deserts
 					if tundra or taiga then
 						data[vi] = c_ice
 					else
 						if noflow then
-							data[vi] = c_flrwatsour
+							data[vi] = c_flrwatzero
 						else
-							data[vi] = c_watsour
+							data[vi] = c_flrwatfour
 						end
 					end
 				end
@@ -513,8 +516,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							data[vi] = c_flrdesand
 						elseif tundra then
 							data[vi] = c_flrperfrost
+						elseif drygrass or savanna then
+							data[vi] = c_flrdirt -- doesnt turn to green grass
 						else
-							data[vi] = c_flrdirt
+							data[vi] = c_dirt
 						end
 					else -- else surface nodes
 						if taiga then
@@ -564,18 +569,22 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				if nodid == c_air then
 					data[vi] = c_ice
 				end
-			elseif grad > 0 and density <= 0 then -- water
+			elseif grad > 0 and density <= 0 then
 				if nodid == c_air then
-					if noise8 > 0.4 and density > -0.01 + (math.random() - 0.5) * 0.005 and grad < 0.02
-					and (deforest or wetgrass or desert or savanna or jungle) then
-						data[vi] = c_flrswatsour
-						if math.random(flora.PAPCHA) == 2 then
+					if noise8 > 0.2 and density > -0.01 + (math.random() - 0.5) * 0.005 and grad < 0.02
+					and (desert or savanna or raforest) then
+						if noflow then -- swampwater
+							data[vi] = c_flrswatzero
+						else
+							data[vi] = c_flrswatfour
+						end
+						if math.random(flora.PAPCHA) == 2 then -- papyrus
 							flexrealm_papyrus(x, y, z, treedir, area, data, c_papyrus, vi)
 						end 
-					elseif noflow then
-						data[vi] = c_flrwatsour
+					elseif noflow then -- water
+						data[vi] = c_flrwatzero
 					else
-						data[vi] = c_watsour
+						data[vi] = c_flrwatfour
 					end
 				end
 			elseif not nofis and grad > 0 and density > 0 and density < DEPT

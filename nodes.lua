@@ -140,33 +140,33 @@ minetest.register_node("flexrealm:junleaf", {
 	sounds = default.node_sound_leaves_defaults(),
 })
 
-minetest.register_node("flexrealm:watflow", {
-	description = "FLR Flowing Water",
+minetest.register_node("flexrealm:watzero", {
+	description = "FLR Water Source Range 0",
 	inventory_image = minetest.inventorycube("default_water.png"),
-	drawtype = "flowingliquid",
-	tiles = {"default_water.png"},
+	drawtype = "liquid",
+	tiles = {
+		{name="default_water_source_animated.png", animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=2.0}}
+	},
 	alpha = WATER_ALPHA,
 	paramtype = "light",
-	paramtype2 = "flowingliquid",
 	walkable = false,
 	pointable = false,
 	diggable = false,
 	buildable_to = true,
 	drop = "",
 	drowning = 1,
-	liquidtype = "flowing",
-	liquid_alternative_flowing = "flexrealm:watflow",
-	liquid_alternative_source = "flexrealm:watsour",
+	liquidtype = "source",
+	liquid_alternative_flowing = "flexrealm:watzero",
+	liquid_alternative_source = "flexrealm:watzero",
 	liquid_viscosity = WATER_VISC,
-	freezemelt = "default:snow",
 	liquid_renewable = false,
 	liquid_range = 0,
 	post_effect_color = {a=64, r=100, g=100, b=200},
-	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1, freezes=1, melt_around=1},
+	groups = {water=3, liquid=3, puts_out_fire=1},
 })
 
-minetest.register_node("flexrealm:watsour", {
-	description = "FLR Water Source",
+minetest.register_node("flexrealm:watfour", {
+	description = "FLR Water Source Range 4",
 	inventory_image = minetest.inventorycube("default_water.png"),
 	drawtype = "liquid",
 	tiles = {
@@ -182,31 +182,117 @@ minetest.register_node("flexrealm:watsour", {
 	drowning = 1,
 	liquidtype = "source",
 	liquid_alternative_flowing = "flexrealm:watflow",
-	liquid_alternative_source = "flexrealm:watsour",
+	liquid_alternative_source = "flexrealm:watfour",
 	liquid_viscosity = WATER_VISC,
-	freezemelt = "default:ice",
 	liquid_renewable = false,
-	liquid_range = 0,
+	liquid_range = 3,
 	post_effect_color = {a=64, r=100, g=100, b=200},
-	groups = {water=3, liquid=3, puts_out_fire=1, freezes=1},
+	groups = {water=3, liquid=3, puts_out_fire=1},
 })
 
-minetest.register_node("flexrealm:swatsour", {
-	description = "FLR Swamp Water Source",
-	inventory_image = minetest.inventorycube("paragenv7_swampwater.png"),
-	--drawtype = "liquid",
-	tiles = {"flexrealm_swatsourtop.png", "flexrealm_swatsour.png"},
+minetest.register_node("flexrealm:watflow", {
+	description = "FLR Flowing Water Range 4",
+	inventory_image = minetest.inventorycube("default_water.png"),
+	drawtype = "flowingliquid",
+	tiles = {"default_water.png"},
+	special_tiles = {
+		{
+			image="default_water_flowing_animated.png",
+			backface_culling=false,
+			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=0.8}
+		},
+		{
+			image="default_water_flowing_animated.png",
+			backface_culling=true,
+			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=0.8}
+		},
+	},
+	alpha = WATER_ALPHA,
+	paramtype = "light",
+	paramtype2 = "flowingliquid",
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	drop = "",
+	drowning = 1,
+	liquidtype = "flowing",
+	liquid_alternative_flowing = "flexrealm:watflow",
+	liquid_alternative_source = "flexrealm:watfour",
+	liquid_viscosity = WATER_VISC,
+	liquid_range = 3,
+	post_effect_color = {a=64, r=100, g=100, b=200},
+	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
+})
+
+minetest.register_node("flexrealm:swatzero", {
+	description = "FLR Swamp Water Source Range 0",
+	inventory_image = minetest.inventorycube("flexrealm_swatzero.png"),
+	tiles = {"flexrealm_swatzero.png"},
 	paramtype = "light",
 	walkable = false,
 	pointable = false,
 	diggable = false,
 	buildable_to = true,
 	liquidtype = "source",
-	liquid_alternative_flowing = "flexrealm:swatsour",
-	liquid_alternative_source = "flexrealm:swatsour",
-	liquid_viscosity = 1,
+	liquid_alternative_flowing = "flexrealm:swatzero",
+	liquid_alternative_source = "flexrealm:swatzero",
+	liquid_viscosity = 2,
 	liquid_renewable = false,
 	liquid_range = 0,
-	post_effect_color = {a=224, r=31, g=56, b=8},
+	post_effect_color = {a=128, r=31, g=56, b=8},
 	groups = {water=3, liquid=3, puts_out_fire=1},
+})
+
+minetest.register_node("flexrealm:swatfour", {
+	description = "FLR Swamp Water Source Range 4",
+	inventory_image = minetest.inventorycube("flexrealm_swatzero.png"),
+	tiles = {"flexrealm_swatzero.png"},
+	paramtype = "light",
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	liquidtype = "source",
+	liquid_alternative_flowing = "flexrealm:swatflow",
+	liquid_alternative_source = "flexrealm:swatfour",
+	liquid_viscosity = 2,
+	liquid_renewable = false,
+	liquid_range = 3,
+	post_effect_color = {a=128, r=31, g=56, b=8},
+	groups = {water=3, liquid=3, puts_out_fire=1},
+})
+
+minetest.register_node("flexrealm:swatflow", {
+	description = "FLR Flowing Swamp Water Range 4",
+	inventory_image = minetest.inventorycube("flexrealm_swatzero.png"),
+	drawtype = "flowingliquid",
+	tiles = {"flexrealm_swatzero.png"},
+	special_tiles = {
+		{
+			image="flexrealm_swatflowanim.png",
+			backface_culling=false,
+			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=0.8}
+		},
+		{
+			image="flexrealm_swatflowanim.png",
+			backface_culling=true,
+			animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=0.8}
+		},
+	},
+	paramtype = "light",
+	paramtype2 = "flowingliquid",
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	drop = "",
+	drowning = 1,
+	liquidtype = "flowing",
+	liquid_alternative_flowing = "flexrealm:swatflow",
+	liquid_alternative_source = "flexrealm:swatfour",
+	liquid_viscosity = 2,
+	liquid_range = 3,
+	post_effect_color = {a=128, r=31, g=56, b=8},
+	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
 })
