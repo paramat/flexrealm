@@ -1,4 +1,4 @@
--- flexrealm 0.2.12 by paramat
+-- flexrealm 0.2.13 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
@@ -46,7 +46,7 @@ local CYLR = 1000 -- Surface radius
 -- Large scale density field 'grad'
 local ICET = 0.05 --  -- Ice density threshold
 local SAAV = 0 --  -- Sandline average density threshold
-local SAAM = 0.06 --  -- Sandline density threshold amplitude
+local SAAM = 0.08 --  -- Sandline density threshold amplitude
 local SARA = 0.02 --  -- Sandline density threshold randomness
 local DUGT = -0.03 --  -- Dune grass density threshold
 local ROCK = -0.6 --  -- Rocky terrain density threshold
@@ -75,7 +75,7 @@ local HTET = 0.1 --  -- Desert / savanna / rainforest temperature noise threshol
 local LTET = -0.5 --  -- Tundra / taiga temperature noise threshold.
 local HWET = 0.1 --  -- Wet grassland / rainforest wetness noise threshold.
 local LWET = -0.5 --  -- Tundra / dry grassland / desert wetness noise threshold.
-local BIOR = 0.03 --  -- Biome noise randomness for blend dithering
+local BIOR = 0.05 --  -- Biome noise randomness for blend dithering
 
 local flora = {
 	ATCHA = 49, --  -- Apple tree maximum 1/x chance per surface node
@@ -88,6 +88,7 @@ local flora = {
 	WEGCHA = 3, --  -- Wet grassland grass 1/x chance per surface node
 	DUGCHA = 5, --  -- Dune grass 1/x chance per surface node
 	PAPCHA = 3, --  -- Papyrus 1/x chance per surface swamp water node
+	DEFCHA = 25, --  -- Flower 1/x chance per surface node
 }
 
 local LINT = 17 --  -- LEAN abm interval
@@ -253,11 +254,20 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_needles = minetest.get_content_id("default:needles")
 	local c_juntree = minetest.get_content_id("default:jungletree")
 	local c_jungrass = minetest.get_content_id("default:junglegrass")
-	local c_grass = minetest.get_content_id("default:grass_3")
+	local c_grass1 = minetest.get_content_id("default:grass_1")
+	local c_grass3 = minetest.get_content_id("default:grass_3")
+	local c_grass5 = minetest.get_content_id("default:grass_5")
 	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
 	local c_watsour = minetest.get_content_id("default:water_source")
 	local c_papyrus = minetest.get_content_id("default:papyrus")
 	local c_dirt = minetest.get_content_id("default:dirt")
+	local c_clay = minetest.get_content_id("default:clay")
+	local c_danwhi = minetest.get_content_id("flowers:dandelion_white")
+	local c_danyel = minetest.get_content_id("flowers:dandelion_yellow")
+	local c_rose = minetest.get_content_id("flowers:rose")
+	local c_tulip = minetest.get_content_id("flowers:tulip")
+	local c_geranium = minetest.get_content_id("flowers:geranium")
+	local c_viola = minetest.get_content_id("flowers:viola")
 	
 	local c_flrdirt = minetest.get_content_id("flexrealm:dirt")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
@@ -501,9 +511,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					data[vi] = c_flrstone
 				end
 			elseif density > 0 and density < stot then -- fine materials
-				if grad >= SAAV + noise8 * SAAM + (math.random() - 0.5) * SARA then -- sand, beach, dunes
+				if grad >= SAAV + noise8 * SAAM + (math.random() - 0.5) * SARA then -- clay, sand, beach, dunes
 					if taiga and density < DIRT and grad <= 0 then -- snowy beach
 						data[vi] = c_snowblock
+					elseif deforest and grad > 0.05 and grad < 0.06 then
+						data[vi] = c_clay
 					else
 						data[vi] = c_flrsand
 						if tree and grad < DUGT and math.random(flora.DUGCHA) == 2 then
@@ -532,8 +544,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							data[vi] = c_flrgrass
 							if tree and math.random(flora.ATCHA) == 2 then
 								flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
+							elseif tree and math.random(flora.DEFCHA) == 2 then
+								flexrealm_flower(x, y, z, treedir, area, data,
+								c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, vi)
 							elseif tree and grad <= 0 and math.random(flora.DEGCHA) == 2 then
-								flexrealm_grass(x, y, z, treedir, area, data, c_grass, vi)
+								flexrealm_grass(x, y, z, treedir, area, data, c_grass1, c_grass3, c_grass5, vi)
 							end
 						elseif savanna then
 							data[vi] = c_flrdrygrass
@@ -556,7 +571,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						elseif wetgrass then
 							data[vi] = c_flrgrass
 							if tree and grad <= 0 and math.random(flora.WEGCHA) == 2 then
-								flexrealm_jungrass(x, y, z, treedir, area, data, c_jungrass, vi)
+								if math.random(3) == 2 then
+									flexrealm_grass(x, y, z, treedir, area, data, c_grass1, c_grass3, c_grass5, vi)
+								else
+									flexrealm_jungrass(x, y, z, treedir, area, data, c_jungrass, vi)
+								end
 							end
 						elseif tundra then
 							data[vi] = c_flrfrograss

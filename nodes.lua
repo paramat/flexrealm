@@ -185,7 +185,7 @@ minetest.register_node("flexrealm:watfour", {
 	liquid_alternative_source = "flexrealm:watfour",
 	liquid_viscosity = WATER_VISC,
 	liquid_renewable = false,
-	liquid_range = 3,
+	liquid_range = 2,
 	post_effect_color = {a=64, r=100, g=100, b=200},
 	groups = {water=3, liquid=3, puts_out_fire=1},
 })
@@ -220,7 +220,7 @@ minetest.register_node("flexrealm:watflow", {
 	liquid_alternative_flowing = "flexrealm:watflow",
 	liquid_alternative_source = "flexrealm:watfour",
 	liquid_viscosity = WATER_VISC,
-	liquid_range = 3,
+	liquid_range = 2,
 	post_effect_color = {a=64, r=100, g=100, b=200},
 	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
 })
@@ -258,7 +258,7 @@ minetest.register_node("flexrealm:swatfour", {
 	liquid_alternative_source = "flexrealm:swatfour",
 	liquid_viscosity = 2,
 	liquid_renewable = false,
-	liquid_range = 3,
+	liquid_range = 2,
 	post_effect_color = {a=128, r=31, g=56, b=8},
 	groups = {water=3, liquid=3, puts_out_fire=1},
 })
@@ -292,7 +292,7 @@ minetest.register_node("flexrealm:swatflow", {
 	liquid_alternative_flowing = "flexrealm:swatflow",
 	liquid_alternative_source = "flexrealm:swatfour",
 	liquid_viscosity = 2,
-	liquid_range = 3,
+	liquid_range = 2,
 	post_effect_color = {a=128, r=31, g=56, b=8},
 	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
 })

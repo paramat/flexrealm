@@ -554,23 +554,37 @@ function flexrealm_jungletree(x, y, z, treedir, area, data, c_juntree, c_flrjunl
 	end
 end
 
-function flexrealm_grass(x, y, z, treedir, area, data, c_grass, vi)
+
+function flexrealm_randgrass(data, c_grass1, c_grass3, c_grass5, via)
+		local rand = math.random(3)
+		if rand == 1 then
+			data[via] = c_grass1
+		elseif rand == 2 then
+			data[via] = c_grass3
+		else
+			data[via] = c_grass5
+		end
+end
+
+function flexrealm_grass(x, y, z, treedir, area, data, c_grass1, c_grass3, c_grass5, vi)
 	if treedir == 1 then
-		data[vi + 1] = c_grass
+		local via = vi + 1
+		flexrealm_randgrass(data, c_grass1, c_grass3, c_grass5, via)
 	elseif treedir == 2 then
-		data[vi - 1] = c_grass
+		local via = vi - 1
+		flexrealm_randgrass(data, c_grass1, c_grass3, c_grass5, via)
 	elseif treedir == 3 then	
 		local via = area:index(x , y + 1, z)
-		data[via] = c_grass
+		flexrealm_randgrass(data, c_grass1, c_grass3, c_grass5, via)
 	elseif treedir == 4 then
 		local via = area:index(x , y - 1, z)
-		data[via] = c_grass
+		flexrealm_randgrass(data, c_grass1, c_grass3, c_grass5, via)
 	elseif treedir == 5 then
 		local via = area:index(x , y , z + 1)
-		data[via] = c_grass
+		flexrealm_randgrass(data, c_grass1, c_grass3, c_grass5, via)
 	elseif treedir == 6 then
 		local via = area:index(x , y , z - 1)
-		data[via] = c_grass
+		flexrealm_randgrass(data, c_grass1, c_grass3, c_grass5, via)
 	end
 end
 
@@ -632,5 +646,44 @@ function flexrealm_papyrus(x, y, z, treedir, area, data, c_papyrus, vi)
 	elseif treedir == 6 then
 		local via = area:index(x , y , z - 1)
 		data[via] = c_papyrus
+	end
+end
+
+function flexrealm_randflower(data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, via)
+		local rand = math.random(6)
+		if rand == 1 then
+			data[via] = c_danwhi
+		elseif rand == 2 then
+			data[via] = c_rose
+		elseif rand == 3 then
+			data[via] = c_tulip
+		elseif rand == 4 then
+			data[via] = c_danyel
+		elseif rand == 5 then
+			data[via] = c_geranium
+		else
+			data[via] = c_viola
+		end
+end
+
+function flexrealm_flower(x, y, z, treedir, area, data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, vi)
+	if treedir == 1 then
+		local via = vi + 1
+		flexrealm_randflower(data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, via)
+	elseif treedir == 2 then
+		local via = vi - 1
+		flexrealm_randflower(data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, via)
+	elseif treedir == 3 then	
+		local via = area:index(x , y + 1, z)
+		flexrealm_randflower(data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, via)
+	elseif treedir == 4 then
+		local via = area:index(x , y - 1, z)
+		flexrealm_randflower(data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, via)
+	elseif treedir == 5 then
+		local via = area:index(x , y , z + 1)
+		flexrealm_randflower(data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, via)
+	elseif treedir == 6 then
+		local via = area:index(x , y , z - 1)
+		flexrealm_randflower(data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, via)
 	end
 end
