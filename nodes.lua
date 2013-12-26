@@ -140,6 +140,18 @@ minetest.register_node("flexrealm:junleaf", {
 	sounds = default.node_sound_leaves_defaults(),
 })
 
+minetest.register_node("flexrealm:gravel", {
+	description = "FLR Gravel",
+	tiles = {"default_gravel.png"},
+	is_ground_content = true,
+	groups = {crumbly=2},
+	drop = "default:gravel",
+	sounds = default.node_sound_dirt_defaults({
+		footstep = {name="default_gravel_footstep", gain=0.5},
+		dug = {name="default_gravel_footstep", gain=1.0},
+	}),
+})
+
 minetest.register_node("flexrealm:watzero", {
 	description = "FLR Water Source Range 0",
 	inventory_image = minetest.inventorycube("default_water.png"),
@@ -166,7 +178,7 @@ minetest.register_node("flexrealm:watzero", {
 })
 
 minetest.register_node("flexrealm:watfour", {
-	description = "FLR Water Source Range 4",
+	description = "FLR Water Source Range 3",
 	inventory_image = minetest.inventorycube("default_water.png"),
 	drawtype = "liquid",
 	tiles = {
@@ -185,13 +197,13 @@ minetest.register_node("flexrealm:watfour", {
 	liquid_alternative_source = "flexrealm:watfour",
 	liquid_viscosity = WATER_VISC,
 	liquid_renewable = false,
-	liquid_range = 2,
+	liquid_range = 3,
 	post_effect_color = {a=64, r=100, g=100, b=200},
 	groups = {water=3, liquid=3, puts_out_fire=1},
 })
 
 minetest.register_node("flexrealm:watflow", {
-	description = "FLR Flowing Water Range 4",
+	description = "FLR Flowing Water Range 3",
 	inventory_image = minetest.inventorycube("default_water.png"),
 	drawtype = "flowingliquid",
 	tiles = {"default_water.png"},
@@ -220,7 +232,8 @@ minetest.register_node("flexrealm:watflow", {
 	liquid_alternative_flowing = "flexrealm:watflow",
 	liquid_alternative_source = "flexrealm:watfour",
 	liquid_viscosity = WATER_VISC,
-	liquid_range = 2,
+	liquid_renewable = false,
+	liquid_range = 3,
 	post_effect_color = {a=64, r=100, g=100, b=200},
 	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
 })
@@ -258,7 +271,7 @@ minetest.register_node("flexrealm:swatfour", {
 	liquid_alternative_source = "flexrealm:swatfour",
 	liquid_viscosity = 2,
 	liquid_renewable = false,
-	liquid_range = 2,
+	liquid_range = 3,
 	post_effect_color = {a=128, r=31, g=56, b=8},
 	groups = {water=3, liquid=3, puts_out_fire=1},
 })
@@ -292,7 +305,34 @@ minetest.register_node("flexrealm:swatflow", {
 	liquid_alternative_flowing = "flexrealm:swatflow",
 	liquid_alternative_source = "flexrealm:swatfour",
 	liquid_viscosity = 2,
-	liquid_range = 2,
+	liquid_renewable = false,
+	liquid_range = 3,
 	post_effect_color = {a=128, r=31, g=56, b=8},
 	groups = {water=3, liquid=3, puts_out_fire=1, not_in_creative_inventory=1},
+})
+
+minetest.register_node("flexrealm:lavazero", {
+	description = "FLR Lava Source Range 0",
+	inventory_image = minetest.inventorycube("default_lava.png"),
+	drawtype = "liquid",
+	tiles = {
+		{name="default_lava_source_animated.png", animation={type="vertical_frames", aspect_w=16, aspect_h=16, length=3.0}}
+	},
+	paramtype = "light",
+	light_source = LIGHT_MAX - 1,
+	walkable = false,
+	pointable = false,
+	diggable = false,
+	buildable_to = true,
+	drop = "",
+	drowning = 1,
+	liquidtype = "source",
+	liquid_alternative_flowing = "flexrealm:lavazero",
+	liquid_alternative_source = "flexrealm:lavazero",
+	liquid_viscosity = LAVA_VISC,
+	liquid_renewable = false,
+	liquid_range = 0,
+	damage_per_second = 4*2,
+	post_effect_color = {a=192, r=255, g=64, b=0},
+	groups = {lava=3, liquid=2, hot=3, igniter=1},
 })

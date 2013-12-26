@@ -1,7 +1,9 @@
--- flexrealm 0.2.13 by paramat
+-- flexrealm 0.2.14 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
+-- TODO
+-- Cactus but with interesting shape
 
 -- Variables
 
@@ -54,12 +56,12 @@ local CLLT = -0.9 --  -- Cloud low density threshold
 local CLHT = -0.895 --  -- Cloud high density threshold
 -- Terrain density field 'density = terno + grad'
 local DEPT = 2 --  -- Realm depth density threshold
-local SSLT1 = 0.20 --  -- Sandstone strata low density threshold1
-local SSHT1 = 0.25 --  -- Sandstone strata high density threshold1
+local SSLT1 = 0.50 --  -- Sandstone strata low density threshold1
+local SSHT1 = 0.55 --  -- Sandstone strata high density threshold1
 local SSLT2 = 0.30 --  -- Sandstone strata low density threshold2
 local SSHT2 = 0.40 --  -- Sandstone strata high density threshold2
-local SSLT3 = 0.50 --  -- Sandstone strata low density threshold3
-local SSHT3 = 0.55 --  -- Sandstone strata high density threshold3
+local GRLT = 0.20 --  -- Gravel strata low density threshold3
+local GRHT = 0.23 --  -- Gravel strata high density threshold3
 local STOT = 0.10 --  -- Stone density threshold at sea level
 local DIRT = 0.05 --  -- Dirt density threshold
 local TRET = 0.01 --  -- Tree growth density threshold, links tree density to soil depth
@@ -71,10 +73,10 @@ local FEXP = 0.1 --  -- Fissure expansion rate under surface
 
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
 
-local HTET = 0.1 --  -- Desert / savanna / rainforest temperature noise threshold.
-local LTET = -0.5 --  -- Tundra / taiga temperature noise threshold.
-local HWET = 0.1 --  -- Wet grassland / rainforest wetness noise threshold.
-local LWET = -0.5 --  -- Tundra / dry grassland / desert wetness noise threshold.
+local HTET = 0.2 --  -- Desert / savanna / rainforest temperature noise threshold.
+local LTET = -0.4 --  -- Tundra / taiga temperature noise threshold.
+local HWET = 0.2 --  -- Wet grassland / rainforest wetness noise threshold.
+local LWET = -0.4 --  -- Tundra / dry grassland / desert wetness noise threshold.
 local BIOR = 0.05 --  -- Biome noise randomness for blend dithering
 
 local flora = {
@@ -89,6 +91,7 @@ local flora = {
 	DUGCHA = 5, --  -- Dune grass 1/x chance per surface node
 	PAPCHA = 3, --  -- Papyrus 1/x chance per surface swamp water node
 	DEFCHA = 25, --  -- Flower 1/x chance per surface node
+	CACHA = 361, --  -- Cactus 1/x chance per surface node
 }
 
 local LINT = 17 --  -- LEAN abm interval
@@ -268,6 +271,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_tulip = minetest.get_content_id("flowers:tulip")
 	local c_geranium = minetest.get_content_id("flowers:geranium")
 	local c_viola = minetest.get_content_id("flowers:viola")
+	local c_cactus = minetest.get_content_id("default:cactus")
 	
 	local c_flrdirt = minetest.get_content_id("flexrealm:dirt")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
@@ -275,6 +279,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrdesand = minetest.get_content_id("flexrealm:desand")
 	local c_flrstone = minetest.get_content_id("flexrealm:stone")
 	local c_flrdestone = minetest.get_content_id("flexrealm:destone")
+	local c_flrgravel = minetest.get_content_id("flexrealm:gravel")
 	local c_flrleanoff = minetest.get_content_id("flexrealm:leanoff")
 	local c_flrcloud = minetest.get_content_id("flexrealm:cloud")
 	local c_flrneedles = minetest.get_content_id("flexrealm:needles")
@@ -287,6 +292,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrwatfour = minetest.get_content_id("flexrealm:watfour")
 	local c_flrswatzero = minetest.get_content_id("flexrealm:swatzero")
 	local c_flrswatfour = minetest.get_content_id("flexrealm:swatfour")
+	local c_flrlavazero = minetest.get_content_id("flexrealm:lavazero")
 	
 	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
 	local nvals2 = minetest.get_perlin_map(np_temp, chulens):get3dMap_flat(minpos)
@@ -342,6 +348,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		
 		if grad >= -1 and density <= DEPT then -- if realm then
 		
+			local temp
+			local humid
 			local desert = false -- desert biome
 			local savanna = false -- savanna biome
 			local raforest = false -- rainforest biome
@@ -351,8 +359,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			local tundra = false -- tundra biome
 			local taiga = false -- taiga forest biome
 			if density > 0 or grad > 0 then -- if terrain or water calculate biome
-				local temp = nvals2[ni] + grad
-				local humid = nvals9[ni] + grad
+				temp = nvals2[ni] + grad
+				humid = nvals9[ni] + grad
 				if temp > HTET + (math.random() - 0.5) * BIOR then
 					if humid > HWET + (math.random() - 0.5) * BIOR then
 						raforest = true
@@ -487,9 +495,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				data[vi] = c_flrsand
 			elseif (density >= stot and density <= DEPT and nofis) then -- stone cut by fissures
 				if (density >= SSLT1 and density <= SSHT1)
-				or (density >= SSLT2 and density <= SSHT2)
-				or (density >= SSLT3 and density <= SSHT3) then
+				or (density >= SSLT2 and density <= SSHT2) then
 					data[vi] = c_sastone
+				elseif density >= GRLT and density <= GRHT then
+					data[vi] = c_flrgravel
 				elseif desert then
 					data[vi] = c_flrdestone
 				elseif math.random(OCHA) == 2 then -- ores
@@ -514,7 +523,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				if grad >= SAAV + noise8 * SAAM + (math.random() - 0.5) * SARA then -- clay, sand, beach, dunes
 					if taiga and density < DIRT and grad <= 0 then -- snowy beach
 						data[vi] = c_snowblock
-					elseif deforest and grad > 0.05 and grad < 0.06 then
+					elseif deforest and grad > 0.05 and grad < 0.057 then -- clay
 						data[vi] = c_clay
 					else
 						data[vi] = c_flrsand
@@ -544,7 +553,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							data[vi] = c_flrgrass
 							if tree and math.random(flora.ATCHA) == 2 then
 								flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
-							elseif tree and math.random(flora.DEFCHA) == 2 then
+							elseif tree and grad <= 0 and math.random(flora.DEFCHA) == 2 then
 								flexrealm_flower(x, y, z, treedir, area, data,
 								c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, vi)
 							elseif tree and grad <= 0 and math.random(flora.DEGCHA) == 2 then
@@ -580,7 +589,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						elseif tundra then
 							data[vi] = c_flrfrograss
 						elseif desert then
-							data[vi] = c_flrdesand
+							if tree and humid > LWET - 0.2 and math.random(flora.CACHA) == 2 then
+								flexrealm_cactus(x, y, z, treedir, area, data, c_cactus)
+							else
+								data[vi] = c_flrdesand
+							end
 						end
 					end
 				end
@@ -609,6 +622,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			elseif not nofis and grad > 0 and density > 0 and density < DEPT
 			and ((noise6 > -0.45 and noise6 < -0.35) or (noise6 > 0.35 and noise6 < 0.45)) then
 				data[vi] = c_flrsand -- sand blocking fissures in faults below water level
+			elseif not nofis and density >= math.sqrt(terblen) * DEPT and density < DEPT then
+				data[vi] = c_flrlavazero -- lava in fissures, rises to surface in rougher ground
 			elseif light and density >= LELT and density <= LEHT and math.random(8) == 2 then
 				if nodid == c_air then -- light emitting air nodes
 					data[vi] = c_flrleanoff

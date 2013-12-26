@@ -687,3 +687,61 @@ function flexrealm_flower(x, y, z, treedir, area, data, c_danwhi, c_rose, c_tuli
 		flexrealm_randflower(data, c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, via)
 	end
 end
+
+function flexrealm_cactus(x, y, z, treedir, area, data, c_cactus)
+	if treedir == 1 then
+		for i = -1, 5 do
+		for j = -2, 2 do
+			if j == 0 or i == 3 or (i == 4 and math.abs(j) == 2) then
+				local vic = area:index(x + i, y + j, z)
+				data[vic] = c_cactus
+			end
+		end
+		end
+	elseif treedir == 2 then
+		for i = -1, 5 do
+		for j = -2, 2 do
+			if j == 0 or i == 3 or (i == 4 and math.abs(j) == 2) then
+				local vic = area:index(x - i, y + j, z)
+				data[vic] = c_cactus
+			end
+		end
+		end
+	elseif treedir == 3 then
+		for j = -1, 5 do
+		for i = -2, 2 do
+			if i == 0 or j == 3 or (j == 4 and math.abs(i) == 2) then
+				local vic = area:index(x + i, y + j, z)
+				data[vic] = c_cactus
+			end
+		end
+		end
+	elseif treedir == 4 then
+		for j = -1, 5 do
+		for i = -2, 2 do
+			if i == 0 or j == 3 or (j == 4 and math.abs(i) == 2) then
+				local vic = area:index(x + i, y - j, z)
+				data[vic] = c_cactus
+			end
+		end
+		end
+	elseif treedir == 5 then
+		for k = -1, 5 do
+		for i = -2, 2 do
+			if i == 0 or k == 3 or (k == 4 and math.abs(i) == 2) then
+				local vic = area:index(x + i, y, z + k)
+				data[vic] = c_cactus
+			end
+		end
+		end
+	elseif treedir == 6 then
+		for k = -1, 5 do
+		for i = -2, 2 do
+			if i == 0 or k == 3 or (k == 4 and math.abs(i) == 2) then
+				local vic = area:index(x + i, y, z - k)
+				data[vic] = c_cactus
+			end
+		end
+		end
+	end
+end
