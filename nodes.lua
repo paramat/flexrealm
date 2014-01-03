@@ -1,27 +1,3 @@
-minetest.register_node("flexrealm:lean", {
-	description = "FLR LEAN",
-	drawtype = "airlike",
-	paramtype = "light",
-	light_source = 14,
-	sunlight_propagates = true,
-	walkable = false,
-	pointable = false,
-	buildable_to = true,
-	groups = {not_in_creative_inventory=1},
-})
-
-minetest.register_node("flexrealm:leanoff", {
-	description = "FLR LEAN Off",
-	drawtype = "airlike",
-	paramtype = "light",
-	light_source = 14,
-	sunlight_propagates = true,
-	walkable = false,
-	pointable = false,
-	buildable_to = true,
-	groups = {not_in_creative_inventory=1},
-})
-
 minetest.register_node("flexrealm:dirt", {
 	description = "FLR Dirt",
 	tiles = {"default_dirt.png"},
@@ -140,16 +116,33 @@ minetest.register_node("flexrealm:junleaf", {
 	sounds = default.node_sound_leaves_defaults(),
 })
 
-minetest.register_node("flexrealm:gravel", {
-	description = "FLR Gravel",
-	tiles = {"default_gravel.png"},
+minetest.register_node("flexrealm:cactus", {
+	description = "FLR Cactus",
+	tiles = {"default_cactus_top.png", "default_cactus_top.png", "default_cactus_side.png"},
+	paramtype2 = "facedir",
 	is_ground_content = true,
-	groups = {crumbly=2},
-	drop = "default:gravel",
-	sounds = default.node_sound_dirt_defaults({
-		footstep = {name="default_gravel_footstep", gain=0.5},
-		dug = {name="default_gravel_footstep", gain=1.0},
-	}),
+	groups = {snappy=1,choppy=3,flammable=2},
+	drop = "default:cactus",
+	sounds = default.node_sound_wood_defaults(),
+	on_place = minetest.rotate_node
+})
+
+minetest.register_node("flexrealm:papyrus", {
+	description = "FLR Papyrus",
+	drawtype = "plantlike",
+	tiles = {"default_papyrus.png"},
+	inventory_image = "default_papyrus.png",
+	wield_image = "default_papyrus.png",
+	paramtype = "light",
+	walkable = false,
+	is_ground_content = true,
+	selection_box = {
+		type = "fixed",
+		fixed = {-0.3, -0.5, -0.3, 0.3, 0.5, 0.3}
+	},
+	groups = {snappy=3,flammable=2},
+	drop = "default:papyrus",
+	sounds = default.node_sound_leaves_defaults(),
 })
 
 minetest.register_node("flexrealm:watzero", {

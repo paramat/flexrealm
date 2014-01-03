@@ -1,9 +1,14 @@
--- flexrealm 0.2.14 by paramat
+-- flexrealm 0.2.15 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
--- TODO
--- Cactus but with interesting shape
+
+-- Removed airlike lighting nodes
+-- Removed gravel strata
+-- All 5 heights of grass in forest and wet grassland
+-- Rewrote flora functions with content ids defined within functions
+-- Papyrus now flexrealm:papyrus to avoid papyrus growth (as with cacti)
+-- Papyrus now multiple heights
 
 -- Variables
 
@@ -15,8 +20,7 @@ local dyson = false -- Dyson sphere
 local planet = false -- Planet sphere
 local tube = false -- East-West tube world
 
-local light = false -- Layer of light emitting airlike nodes following terrain
-local noflow = false -- Use non-flowing water in realms other than 'flat'
+local noflow = false -- Use non-flowing water
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
@@ -60,13 +64,11 @@ local SSLT1 = 0.50 --  -- Sandstone strata low density threshold1
 local SSHT1 = 0.55 --  -- Sandstone strata high density threshold1
 local SSLT2 = 0.30 --  -- Sandstone strata low density threshold2
 local SSHT2 = 0.40 --  -- Sandstone strata high density threshold2
-local GRLT = 0.20 --  -- Gravel strata low density threshold3
-local GRHT = 0.23 --  -- Gravel strata high density threshold3
+local SSLT3 = 0.20 --  -- Gravel strata low density threshold3
+local SSHT3 = 0.25 --  -- Gravel strata high density threshold3
 local STOT = 0.10 --  -- Stone density threshold at sea level
 local DIRT = 0.05 --  -- Dirt density threshold
 local TRET = 0.01 --  -- Tree growth density threshold, links tree density to soil depth
-local LELT = -0.22 --  -- LEAN (Light Emitting Airlike Node) low density threshold
-local LEHT = -0.18 --  -- LEAN high density threshold
 
 local FITS = 0 --  -- Fissure threshold at surface. Controls size of fissure entrances at surface
 local FEXP = 0.1 --  -- Fissure expansion rate under surface
@@ -93,9 +95,6 @@ local flora = {
 	DEFCHA = 25, --  -- Flower 1/x chance per surface node
 	CACHA = 361, --  -- Cactus 1/x chance per surface node
 }
-
-local LINT = 17 --  -- LEAN abm interval
-local LCHA = 32*32 --  -- LEAN abm 1/x chance
 
 -- Noise parameters
 
@@ -205,17 +204,6 @@ flexrealm = {}
 dofile(minetest.get_modpath("flexrealm").."/nodes.lua")
 dofile(minetest.get_modpath("flexrealm").."/functions.lua")
 
--- Abm
-
-minetest.register_abm({
-	nodenames = {"flexrealm:leanoff"},
-	interval = LINT,
-	chance = LCHA,
-	action = function(pos, node)
-		minetest.add_node(pos,{name="flexrealm:lean"})
-	end,
-})
-
 -- On generated function
 
 minetest.register_on_generated(function(minp, maxp, seed)
@@ -233,7 +221,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local y1 = maxp.y
 	local z1 = maxp.z
 	print ("[flexrealm] chunk minp ("..x0.." "..y0.." "..z0..")")
-	local sidelen = x1 - x0 + 1 -- chunk side length
+	local sidelen = x1 - x0 + 1
 	local chulens = {x=sidelen, y=sidelen, z=sidelen}
 	local minpos = {x=x0, y=y0, z=z0}
 	
@@ -248,30 +236,12 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_stocopp = minetest.get_content_id("default:stone_with_copper")
 	local c_stoiron = minetest.get_content_id("default:stone_with_iron")
 	local c_stocoal = minetest.get_content_id("default:stone_with_coal")
-	local c_apple = minetest.get_content_id("default:apple")
-	local c_leaves = minetest.get_content_id("default:leaves")
-	local c_tree = minetest.get_content_id("default:tree")
 	local c_snowblock = minetest.get_content_id("default:snowblock")
 	local c_ice = minetest.get_content_id("default:ice")
 	local c_sastone = minetest.get_content_id("default:sandstone")
-	local c_needles = minetest.get_content_id("default:needles")
-	local c_juntree = minetest.get_content_id("default:jungletree")
-	local c_jungrass = minetest.get_content_id("default:junglegrass")
-	local c_grass1 = minetest.get_content_id("default:grass_1")
-	local c_grass3 = minetest.get_content_id("default:grass_3")
-	local c_grass5 = minetest.get_content_id("default:grass_5")
-	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
 	local c_watsour = minetest.get_content_id("default:water_source")
-	local c_papyrus = minetest.get_content_id("default:papyrus")
 	local c_dirt = minetest.get_content_id("default:dirt")
 	local c_clay = minetest.get_content_id("default:clay")
-	local c_danwhi = minetest.get_content_id("flowers:dandelion_white")
-	local c_danyel = minetest.get_content_id("flowers:dandelion_yellow")
-	local c_rose = minetest.get_content_id("flowers:rose")
-	local c_tulip = minetest.get_content_id("flowers:tulip")
-	local c_geranium = minetest.get_content_id("flowers:geranium")
-	local c_viola = minetest.get_content_id("flowers:viola")
-	local c_cactus = minetest.get_content_id("default:cactus")
 	
 	local c_flrdirt = minetest.get_content_id("flexrealm:dirt")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
@@ -279,15 +249,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrdesand = minetest.get_content_id("flexrealm:desand")
 	local c_flrstone = minetest.get_content_id("flexrealm:stone")
 	local c_flrdestone = minetest.get_content_id("flexrealm:destone")
-	local c_flrgravel = minetest.get_content_id("flexrealm:gravel")
-	local c_flrleanoff = minetest.get_content_id("flexrealm:leanoff")
 	local c_flrcloud = minetest.get_content_id("flexrealm:cloud")
-	local c_flrneedles = minetest.get_content_id("flexrealm:needles")
 	local c_flrdrygrass = minetest.get_content_id("flexrealm:drygrass")
 	local c_flrfrograss = minetest.get_content_id("flexrealm:frograss")
 	local c_flrperfrost = minetest.get_content_id("flexrealm:perfrost")
-	local c_flrsavleaf = minetest.get_content_id("flexrealm:savleaf")
-	local c_flrjunleaf = minetest.get_content_id("flexrealm:junleaf")
 	local c_flrwatzero = minetest.get_content_id("flexrealm:watzero")
 	local c_flrwatfour = minetest.get_content_id("flexrealm:watfour")
 	local c_flrswatzero = minetest.get_content_id("flexrealm:swatzero")
@@ -386,7 +351,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		
 			local nofis = false
 			if density > 0 then -- if terrain then set nofis
-				if math.abs(nvals3[ni]) > FITS + density ^ 0.5 * FEXP then
+				if math.abs(nvals3[ni]) > FITS + math.sqrt(density) * FEXP then
 					nofis = true
 				end
 			end
@@ -495,10 +460,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				data[vi] = c_flrsand
 			elseif (density >= stot and density <= DEPT and nofis) then -- stone cut by fissures
 				if (density >= SSLT1 and density <= SSHT1)
-				or (density >= SSLT2 and density <= SSHT2) then
+				or (density >= SSLT2 and density <= SSHT2)
+				or (density >= SSLT3 and density <= SSHT3) then
 					data[vi] = c_sastone
-				elseif density >= GRLT and density <= GRHT then
-					data[vi] = c_flrgravel
 				elseif desert then
 					data[vi] = c_flrdestone
 				elseif math.random(OCHA) == 2 then -- ores
@@ -545,52 +509,51 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					else -- else surface nodes
 						if taiga then
 							if tree and math.random(flora.PTCHA) == 2 then
-								flexrealm_pinetree(x, y, z, treedir, area, data, c_tree, c_flrneedles, c_snowblock)
+								flexrealm_pinetree(x, y, z, treedir, area, data)
 							else
 								data[vi] = c_snowblock
 							end
 						elseif deforest then
 							data[vi] = c_flrgrass
 							if tree and math.random(flora.ATCHA) == 2 then
-								flexrealm_appletree(x, y, z, treedir, area, data, c_tree, c_leaves, c_apple)
+								flexrealm_appletree(x, y, z, treedir, area, data)
 							elseif tree and grad <= 0 and math.random(flora.DEFCHA) == 2 then
-								flexrealm_flower(x, y, z, treedir, area, data,
-								c_danwhi, c_rose, c_tulip, c_danyel, c_geranium, c_viola, vi)
+								flexrealm_flower(x, y, z, treedir, area, data)
 							elseif tree and grad <= 0 and math.random(flora.DEGCHA) == 2 then
-								flexrealm_grass(x, y, z, treedir, area, data, c_grass1, c_grass3, c_grass5, vi)
+								flexrealm_grass(x, y, z, treedir, area, data)
 							end
 						elseif savanna then
 							data[vi] = c_flrdrygrass
 							if tree and math.random(flora.STCHA) == 2 then
-								flexrealm_savannatree(x, y, z, treedir, area, data, c_tree, c_flrsavleaf)
+								flexrealm_savannatree(x, y, z, treedir, area, data)
 							elseif tree and grad <= 0 and math.random(flora.SAGCHA) == 2 then
-								flexrealm_dryshrub(x, y, z, treedir, area, data, c_dryshrub, vi)
+								flexrealm_dryshrub(x, y, z, treedir, area, data)
 							end
 						elseif raforest then
 							if tree and math.random(flora.JTCHA) == 2 then
-								flexrealm_jungletree(x, y, z, treedir, area, data, c_juntree, c_flrjunleaf)
+								flexrealm_jungletree(x, y, z, treedir, area, data)
 							else
 								data[vi] = c_flrgrass
 							end
 						elseif drygrass then
 							data[vi] = c_flrdrygrass
 							if tree and grad <= 0 and math.random(flora.DRGCHA) == 2 then
-								flexrealm_dryshrub(x, y, z, treedir, area, data, c_dryshrub, vi)
+								flexrealm_dryshrub(x, y, z, treedir, area, data)
 							end
 						elseif wetgrass then
 							data[vi] = c_flrgrass
 							if tree and grad <= 0 and math.random(flora.WEGCHA) == 2 then
 								if math.random(3) == 2 then
-									flexrealm_grass(x, y, z, treedir, area, data, c_grass1, c_grass3, c_grass5, vi)
+									flexrealm_grass(x, y, z, treedir, area, data)
 								else
-									flexrealm_jungrass(x, y, z, treedir, area, data, c_jungrass, vi)
+									flexrealm_jungrass(x, y, z, treedir, area, data)
 								end
 							end
 						elseif tundra then
 							data[vi] = c_flrfrograss
 						elseif desert then
 							if tree and humid > LWET - 0.2 and math.random(flora.CACHA) == 2 then
-								flexrealm_cactus(x, y, z, treedir, area, data, c_cactus)
+								flexrealm_cactus(x, y, z, treedir, area, data)
 							else
 								data[vi] = c_flrdesand
 							end
@@ -611,7 +574,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 							data[vi] = c_flrswatfour
 						end
 						if math.random(flora.PAPCHA) == 2 then -- papyrus
-							flexrealm_papyrus(x, y, z, treedir, area, data, c_papyrus, vi)
+							flexrealm_papyrus(x, y, z, treedir, area, data)
 						end 
 					elseif noflow then -- water
 						data[vi] = c_flrwatzero
@@ -624,10 +587,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				data[vi] = c_flrsand -- sand blocking fissures in faults below water level
 			elseif not nofis and density >= math.sqrt(terblen) * DEPT and density < DEPT then
 				data[vi] = c_flrlavazero -- lava in fissures, rises to surface in rougher ground
-			elseif light and density >= LELT and density <= LEHT and math.random(8) == 2 then
-				if nodid == c_air then -- light emitting air nodes
-					data[vi] = c_flrleanoff
-				end
 			elseif grad >= CLLT and grad <= CLHT -- clouds
 			and ((density >= -1.1 and density <= -1.07)
 			or (density >= -0.93 and density <= -0.9)) then
@@ -641,6 +600,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	end
 	end
 	end
+	
 	vm:set_data(data)
 	vm:set_lighting({day=0, night=0})
 	vm:calc_lighting()
