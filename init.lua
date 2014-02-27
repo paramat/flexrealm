@@ -1,26 +1,19 @@
--- flexrealm 0.2.15 by paramat
+-- flexrealm 0.2.16 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- Removed airlike lighting nodes
--- Removed gravel strata
--- All 5 heights of grass in forest and wet grassland
--- Rewrote flora functions with content ids defined within functions
--- Papyrus now flexrealm:papyrus to avoid papyrus growth (as with cacti)
--- Papyrus now multiple heights
-
 -- Variables
 
 local flex = false -- 3D noise flexy realm
-local flat = true -- Normal flat realm
+local flat = false -- Normal flat realm
 local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
 local dyson = false -- Dyson sphere
 local planet = false -- Planet sphere
-local tube = false -- East-West tube world
+local tube = true -- East-West tube world
 
-local noflow = false -- Use non-flowing water
+local noflow = true -- Use non-flowing water
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
@@ -42,11 +35,11 @@ local VERTZ = 0 -- Surface z
 -- Dyson sphere and planet sphere
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
-local SPHEY = 15048 -- ..y 
-local SPHER = 10000 -- Surface radius
+local SPHEY = 3000 -- ..y 
+local SPHER = 2048 -- Surface radius
 -- Cylinder
 local CYLZ = 0 -- Axis z
-local CYLY = 6048 -- ..y 
+local CYLY = 2000 -- ..y 
 local CYLR = 1000 -- Surface radius
 
 -- Large scale density field 'grad'
@@ -57,7 +50,7 @@ local SARA = 0.02 --  -- Sandline density threshold randomness
 local DUGT = -0.03 --  -- Dune grass density threshold
 local ROCK = -0.6 --  -- Rocky terrain density threshold
 local CLLT = -0.9 --  -- Cloud low density threshold
-local CLHT = -0.895 --  -- Cloud high density threshold
+local CLHT = -0.89 --  -- Cloud high density threshold
 -- Terrain density field 'density = terno + grad'
 local DEPT = 2 --  -- Realm depth density threshold
 local SSLT1 = 0.50 --  -- Sandstone strata low density threshold1
@@ -74,6 +67,8 @@ local FITS = 0 --  -- Fissure threshold at surface. Controls size of fissure ent
 local FEXP = 0.1 --  -- Fissure expansion rate under surface
 
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
+
+local TCLOUD = 0.5 --  -- Cloud threshold, -2 = overcast, 2 = no cloud
 
 local HTET = 0.2 --  -- Desert / savanna / rainforest temperature noise threshold.
 local LTET = -0.4 --  -- Tundra / taiga temperature noise threshold.
@@ -103,19 +98,8 @@ local flora = {
 local np_terrain = {
 	offset = 0,
 	scale = 1,
-	spread = {x=256, y=256, z=256},
+	spread = {x=512, y=512, z=512},
 	seed = 92,
-	octaves = 5,
-	persist = 0.6
-}
-
--- 3D noise 5 for terrain alt
-
-local np_alter = {
-	offset = 0,
-	scale = 1,
-	spread = {x=414, y=414, z=414},
-	seed = -3911,
 	octaves = 6,
 	persist = 0.6
 }
@@ -138,7 +122,7 @@ local np_terblen = {
 	scale = 1,
 	spread = {x=414, y=414, z=414},
 	seed = -440002,
-	octaves = 2,
+	octaves = 1,
 	persist = 0.5
 }
 
@@ -180,13 +164,13 @@ local np_humid = {
 local np_fissure = {
 	offset = 0,
 	scale = 1,
-	spread = {x=104, y=104, z=104},
+	spread = {x=128, y=128, z=128},
 	seed = 186000048881,
 	octaves = 4,
 	persist = 0.5
 }
 
--- 3D noise 4 for large scale density gradient
+-- 3D noise 4 for flexy realm large scale density gradient
 
 local np_dengrad = {
 	offset = 0,
@@ -195,6 +179,17 @@ local np_dengrad = {
 	seed = 80000002222208,
 	octaves = 3,
 	persist = 0.3
+}
+
+-- 3D noise for clouds
+
+local np_cloud = {
+	offset = 0,
+	scale = 1,
+	spread = {x=104, y=104, z=104},
+	seed = 2113,
+	octaves = 4,
+	persist = 0.7
 }
 
 -- Stuff
@@ -265,11 +260,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	if flex then
 		local nvals4 = minetest.get_perlin_map(np_dengrad, chulens):get3dMap_flat(minpos)
 	end
-	local nvals5 = minetest.get_perlin_map(np_alter, chulens):get3dMap_flat(minpos)
 	local nvals6 = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
 	local nvals7 = minetest.get_perlin_map(np_smooth, chulens):get3dMap_flat(minpos)
 	local nvals8 = minetest.get_perlin_map(np_terblen, chulens):get3dMap_flat(minpos)
 	local nvals9 = minetest.get_perlin_map(np_humid, chulens):get3dMap_flat(minpos)
+	local nvals_cloud = minetest.get_perlin_map(np_cloud, chulens):get3dMap_flat(minpos)
 	
 	local ni = 1
 	for z = z0, z1 do
@@ -284,9 +279,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local noise8 = nvals8[ni] -- terrain blend
 		local terblen = math.min(math.abs(noise8) * 2, 1) -- terrain blend with smooth
 		if noise6 >= -0.4 and noise6 <= 0.4 then
-			terno = (nvals1[ni] + nvals5[ni]) / 2 * (1 - terblen) + nvals7[ni] * terblen
+			terno = nvals1[ni] * (1 - terblen) + nvals7[ni] * terblen
 		else
-			terno = (nvals1[ni] - nvals5[ni]) / 2 * (1 - terblen) - nvals7[ni] * terblen
+			terno = nvals1[ni] * (1 - terblen) - nvals7[ni] * terblen
 		end
 		if flex then
 			local noise4 = nvals4[ni]
@@ -492,7 +487,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					else
 						data[vi] = c_flrsand
 						if tree and grad < DUGT and math.random(flora.DUGCHA) == 2 then
-							flexrealm_dryshrub(x, y, z, treedir, area, data, c_dryshrub, vi)
+							flexrealm_dryshrub(x, y, z, treedir, area, data)
 						end
 					end
 				elseif nofis or (not nofis and grad > 0) then -- fine materials cut by fissures above sea level only
@@ -587,10 +582,12 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				data[vi] = c_flrsand -- sand blocking fissures in faults below water level
 			elseif not nofis and density >= math.sqrt(terblen) * DEPT and density < DEPT then
 				data[vi] = c_flrlavazero -- lava in fissures, rises to surface in rougher ground
-			elseif grad >= CLLT and grad <= CLHT -- clouds
-			and ((density >= -1.1 and density <= -1.07)
-			or (density >= -0.93 and density <= -0.9)) then
-				if nodid == c_air then
+			elseif grad >= CLLT and grad <= CLHT then -- clouds
+				local xrq = 16 * math.floor((x - x0) / 16)
+				local yrq = 16 * math.floor((y - y0) / 16)
+				local zrq = 16 * math.floor((z - z0) / 16)
+				local qixyz = zrq * 6400 + yrq * 80 + xrq + 1
+				if nvals_cloud[qixyz] > TCLOUD and grad < -0.895 + nvals9[ni] * 0.005 then
 					data[vi] = c_flrcloud
 				end
 			end
