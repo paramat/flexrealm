@@ -1,7 +1,10 @@
--- flexrealm 0.2.16 by paramat
+-- flexrealm 0.2.17 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
+
+-- Auto setting of flow / non-flow water dependant on treedir
+-- Endcaps / walls for tube realm, enables ringworlds and sealed habitats
 
 -- Variables
 
@@ -12,8 +15,6 @@ local invert = false -- Inverted flat realm
 local dyson = false -- Dyson sphere
 local planet = false -- Planet sphere
 local tube = true -- East-West tube world
-
-local noflow = true -- Use non-flowing water
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
@@ -27,7 +28,7 @@ local limit = {
 -- Flexy realm
 local GFAC = 10 -- Density gradient factor (noise4 multiplier). Reduce for higher hills
 
-local TERRS = 96 -- Terrain scale for all realms below
+local TERRS = 128 -- Terrain scale for all realms below
 -- Normal and inverted flat realms
 local FLATY = 5048 -- Surface y
 -- Vertical flat realm facing south
@@ -41,18 +42,21 @@ local SPHER = 2048 -- Surface radius
 local CYLZ = 0 -- Axis z
 local CYLY = 2000 -- ..y 
 local CYLR = 1000 -- Surface radius
+local CYLWX = 256 -- Wall base +-x
+local CYLWW = 512 -- Wall width
 
 -- Large scale density field 'grad'
+local DEPT = 2 --  -- Realm depth density threshold
 local ICET = 0.05 --  -- Ice density threshold
 local SAAV = 0 --  -- Sandline average density threshold
 local SAAM = 0.08 --  -- Sandline density threshold amplitude
 local SARA = 0.02 --  -- Sandline density threshold randomness
 local DUGT = -0.03 --  -- Dune grass density threshold
-local ROCK = -0.6 --  -- Rocky terrain density threshold
+local ROCK = -1 --  -- Rocky terrain density threshold
 local CLLT = -0.9 --  -- Cloud low density threshold
 local CLHT = -0.89 --  -- Cloud high density threshold
+local WALT = -100 -- Wall top density threshold
 -- Terrain density field 'density = terno + grad'
-local DEPT = 2 --  -- Realm depth density threshold
 local SSLT1 = 0.50 --  -- Sandstone strata low density threshold1
 local SSHT1 = 0.55 --  -- Sandstone strata high density threshold1
 local SSLT2 = 0.30 --  -- Sandstone strata low density threshold2
@@ -267,12 +271,14 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_cloud = minetest.get_perlin_map(np_cloud, chulens):get3dMap_flat(minpos)
 	
 	local ni = 1
+	local treedir = 4 -- set to upside down to place non-flowing water before treedir recalculated for node at ni = 6482
 	for z = z0, z1 do
 	for y = y0, y1 do
 	local vi = area:index(x0, y, z) -- LVM index for first node in x row
 	for x = x0, x1 do -- for each node do
 		local nodid = data[vi] -- node
 		
+		local density
 		local terno
 		local grad
 		local noise6 = nvals6[ni] -- faults
@@ -283,6 +289,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		else
 			terno = nvals1[ni] * (1 - terblen) - nvals7[ni] * terblen
 		end
+		
 		if flex then
 			local noise4 = nvals4[ni]
 			grad = noise4 * GFAC
@@ -299,14 +306,23 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			else -- planet
 				grad = (SPHER - nodrad) / TERRS
 			end
-		
 		elseif tube then
 			local nodrad = math.sqrt((y - CYLY) ^ 2 + (z - CYLZ) ^ 2)
-			grad = (nodrad - CYLR) / TERRS
+			grad = (nodrad - CYLR) / TERRS -- terrain density field
 		end
-		local density = terno + grad -- terrain density field
 		
-		if grad >= -1 and density <= DEPT then -- if realm then
+		if tube then
+			if math.abs(x) > CYLWX then -- walls / endcaps
+				local wall = ((math.abs(x) - CYLWX) / CYLWW) ^ 2 * CYLR / TERRS
+				density = terno + grad + wall
+			else
+				density = terno + grad
+			end
+		else
+			density = terno + grad
+		end
+			
+		if grad >= WALT and grad <= DEPT then
 		
 			local temp
 			local humid
@@ -351,16 +367,15 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				end
 			end
 			
-			-- if surface node away from chunk boundary get up direction
+			-- if surface node away from chunk boundary get up direction for trees
 			local tree = false
-			local treedir
 			if density <= TRET -- surface node
 			and x-x0 >= 1 and x1 - x >= 1
 			and y-y0 >= 1 and y1 - y >= 1
 			and z-z0 >= 1 and z1 - z >= 1 then
 				tree = true
 			end
-			if tree then
+			if tree or ni == 6482 then -- set treedir at first non-border node for water selection
 				local sphedis = SPHER * 0.707 
 				local cyldis = CYLR * 0.707 
 				if vertical then
@@ -442,10 +457,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					if tundra or taiga then
 						data[vi] = c_ice
 					else
-						if noflow then
-							data[vi] = c_flrwatzero
-						else
+						if treedir == 3 then
 							data[vi] = c_flrwatfour
+						else
+							data[vi] = c_flrwatzero
 						end
 					end
 				end
@@ -453,7 +468,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			and noise6abs <= 0.04 * (1 - (density / 0.3) ^ 2)
 			and grad < 0.12 and density >= 0.1 then
 				data[vi] = c_flrsand
-			elseif (density >= stot and density <= DEPT and nofis) then -- stone cut by fissures
+			elseif (density >= stot and grad <= DEPT and nofis) then -- stone cut by fissures
 				if (density >= SSLT1 and density <= SSHT1)
 				or (density >= SSLT2 and density <= SSHT2)
 				or (density >= SSLT3 and density <= SSHT3) then
@@ -563,24 +578,24 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				if nodid == c_air then
 					if noise8 > 0.2 and density > -0.01 + (math.random() - 0.5) * 0.005 and grad < 0.02
 					and (desert or savanna or raforest) then
-						if noflow then -- swampwater
-							data[vi] = c_flrswatzero
-						else
+						if treedir == 3 then -- swampwater
 							data[vi] = c_flrswatfour
+						else
+							data[vi] = c_flrswatzero
 						end
 						if math.random(flora.PAPCHA) == 2 then -- papyrus
 							flexrealm_papyrus(x, y, z, treedir, area, data)
 						end 
-					elseif noflow then -- water
-						data[vi] = c_flrwatzero
-					else
+					elseif treedir == 3 then -- water
 						data[vi] = c_flrwatfour
+					else
+						data[vi] = c_flrwatzero
 					end
 				end
-			elseif not nofis and grad > 0 and density > 0 and density < DEPT
+			elseif not nofis and grad > 0 and density > 0 and grad <= DEPT
 			and ((noise6 > -0.45 and noise6 < -0.35) or (noise6 > 0.35 and noise6 < 0.45)) then
 				data[vi] = c_flrsand -- sand blocking fissures in faults below water level
-			elseif not nofis and density >= math.sqrt(terblen) * DEPT and density < DEPT then
+			elseif not nofis and density >= math.sqrt(terblen) * DEPT and grad <= DEPT then
 				data[vi] = c_flrlavazero -- lava in fissures, rises to surface in rougher ground
 			elseif grad >= CLLT and grad <= CLHT then -- clouds
 				local xrq = 16 * math.floor((x - x0) / 16)
