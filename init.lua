@@ -1,10 +1,13 @@
--- flexrealm 0.2.17 by paramat
+-- flexrealm 0.2.18 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- Auto setting of flow / non-flow water dependant on treedir
--- Endcaps / walls for tube realm, enables ringworlds and sealed habitats
+-- removed ringworld option
+-- bugfix dry shrub function
+-- TODO
+-- thin rivers with altitude, erase from endcaps
+-- too much lava in fissures, separate magma conduit system?
 
 -- Variables
 
@@ -13,8 +16,8 @@ local flat = false -- Normal flat realm
 local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
 local dyson = false -- Dyson sphere
-local planet = false -- Planet sphere
-local tube = true -- East-West tube world
+local planet = true -- Planet sphere
+local tube = false -- East-West tube world / O'Neill space colony
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
@@ -30,23 +33,23 @@ local GFAC = 10 -- Density gradient factor (noise4 multiplier). Reduce for highe
 
 local TERRS = 128 -- Terrain scale for all realms below
 -- Normal and inverted flat realms
-local FLATY = 5048 -- Surface y
+local FLATY = 1000 -- Surface y
 -- Vertical flat realm facing south
 local VERTZ = 0 -- Surface z
 -- Dyson sphere and planet sphere
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
-local SPHEY = 3000 -- ..y 
-local SPHER = 2048 -- Surface radius
--- Cylinder
+local SPHEY = 408 -- ..y 
+local SPHER = 120 -- Surface radius
+-- Tube realm
 local CYLZ = 0 -- Axis z
-local CYLY = 2000 -- ..y 
-local CYLR = 1000 -- Surface radius
-local CYLWX = 256 -- Wall base +-x
-local CYLWW = 512 -- Wall width
+local CYLY = 3000 -- ..y
+local CYLR = 2000 -- Surface radius
+local CYLEX = 4000 -- Endcap base +-x
+local CYLEW = 512 -- Endcap dish depth
 
 -- Large scale density field 'grad'
-local DEPT = 2 --  -- Realm depth density threshold
+local DEPT = 2 --  -- Realm +-depth density threshold
 local ICET = 0.05 --  -- Ice density threshold
 local SAAV = 0 --  -- Sandline average density threshold
 local SAAM = 0.08 --  -- Sandline density threshold amplitude
@@ -55,7 +58,7 @@ local DUGT = -0.03 --  -- Dune grass density threshold
 local ROCK = -1 --  -- Rocky terrain density threshold
 local CLLT = -0.9 --  -- Cloud low density threshold
 local CLHT = -0.89 --  -- Cloud high density threshold
-local WALT = -100 -- Wall top density threshold
+
 -- Terrain density field 'density = terno + grad'
 local SSLT1 = 0.50 --  -- Sandstone strata low density threshold1
 local SSHT1 = 0.55 --  -- Sandstone strata high density threshold1
@@ -67,11 +70,8 @@ local STOT = 0.10 --  -- Stone density threshold at sea level
 local DIRT = 0.05 --  -- Dirt density threshold
 local TRET = 0.01 --  -- Tree growth density threshold, links tree density to soil depth
 
-local FITS = 0 --  -- Fissure threshold at surface. Controls size of fissure entrances at surface
-local FEXP = 0.1 --  -- Fissure expansion rate under surface
-
+local FISEXP = 0.02 -- Fissure expansion rate under surface
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
-
 local TCLOUD = 0.5 --  -- Cloud threshold, -2 = overcast, 2 = no cloud
 
 local HTET = 0.2 --  -- Desert / savanna / rainforest temperature noise threshold.
@@ -312,8 +312,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		end
 		
 		if tube then
-			if math.abs(x) > CYLWX then -- walls / endcaps
-				local wall = ((math.abs(x) - CYLWX) / CYLWW) ^ 2 * CYLR / TERRS
+			if math.abs(x) > CYLEX then -- endcaps
+				local wall = ((math.abs(x) - CYLEX) / CYLEW) ^ 2 * CYLR / TERRS
 				density = terno + grad + wall
 			else
 				density = terno + grad
@@ -322,7 +322,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			density = terno + grad
 		end
 			
-		if grad >= WALT and grad <= DEPT then
+		if ((not tube and grad >= -DEPT) or tube) and grad <= DEPT then
 		
 			local temp
 			local humid
@@ -362,7 +362,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		
 			local nofis = false
 			if density > 0 then -- if terrain then set nofis
-				if math.abs(nvals3[ni]) > FITS + math.sqrt(density) * FEXP then
+				if math.abs(nvals3[ni]) > math.sqrt(density) * FISEXP then
 					nofis = true
 				end
 			end
@@ -475,7 +475,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					data[vi] = c_sastone
 				elseif desert then
 					data[vi] = c_flrdestone
-				elseif math.random(OCHA) == 2 then -- ores
+				elseif math.random(OCHA) == 2 and density >= STOT then -- ores
 					local osel = math.random(34)
 					if osel == 34 then
 						data[vi] = c_meseblock -- revenge!
