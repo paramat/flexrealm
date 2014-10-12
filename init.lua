@@ -1,13 +1,16 @@
--- flexrealm 0.2.18 by paramat
+-- flexrealm 0.3.0 by paramat
 -- For latest stable Minetest and back to 0.4.8
 -- Depends default
 -- Licenses: code WTFPL, textures CC BY-SA
 
--- removed ringworld option
--- bugfix dry shrub function
+-- use sidelen, facearea for any chunk size
+-- cubic world option
+-- singlenode, no default clouds
+-- non transparent needles
 -- TODO
 -- thin rivers with altitude, erase from endcaps
 -- too much lava in fissures, separate magma conduit system?
+-- simplify biomes?
 
 -- Variables
 
@@ -16,13 +19,14 @@ local flat = false -- Normal flat realm
 local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
 local dyson = false -- Dyson sphere
-local planet = true -- Planet sphere
+local planet = false -- Planet sphere
 local tube = false -- East-West tube world / O'Neill space colony
+local cube = true
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
 	XMAX = 33000,
-	YMIN = -32,
+	YMIN = -33000,
 	YMAX = 33000,
 	ZMIN = -33000,
 	ZMAX = 33000,
@@ -31,22 +35,24 @@ local limit = {
 -- Flexy realm
 local GFAC = 10 -- Density gradient factor (noise4 multiplier). Reduce for higher hills
 
-local TERRS = 128 -- Terrain scale for all realms below
+local TERRS = 64 -- Terrain scale for all realms below
 -- Normal and inverted flat realms
-local FLATY = 1000 -- Surface y
+local FLATY = 0 -- Surface y
 -- Vertical flat realm facing south
 local VERTZ = 0 -- Surface z
 -- Dyson sphere and planet sphere
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
-local SPHEY = 408 -- ..y 
-local SPHER = 120 -- Surface radius
+local SPHEY = 0 -- ..y 
+local SPHER = 128 -- Surface radius
 -- Tube realm
 local CYLZ = 0 -- Axis z
-local CYLY = 3000 -- ..y
+local CYLY = 0 -- ..y
 local CYLR = 2000 -- Surface radius
 local CYLEX = 4000 -- Endcap base +-x
 local CYLEW = 512 -- Endcap dish depth
+-- Cube realm
+local CUBER = 128 -- Surface radius
 
 -- Large scale density field 'grad'
 local DEPT = 2 --  -- Realm +-depth density threshold
@@ -198,10 +204,20 @@ local np_cloud = {
 
 -- Stuff
 
-flexrealm = {}
-
 dofile(minetest.get_modpath("flexrealm").."/nodes.lua")
 dofile(minetest.get_modpath("flexrealm").."/functions.lua")
+
+minetest.register_on_mapgen_init(function(mgparams)
+	minetest.set_mapgen_params({mgname="singlenode", water_level=-33000})
+end)
+
+minetest.register_on_joinplayer(function(player)
+	minetest.setting_set("enable_clouds", "false")
+end)
+	
+minetest.register_on_leaveplayer(function(player)
+	minetest.setting_set("enable_clouds", "true")
+end)
 
 -- On generated function
 
@@ -220,7 +236,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local y1 = maxp.y
 	local z1 = maxp.z
 	print ("[flexrealm] chunk minp ("..x0.." "..y0.." "..z0..")")
+
 	local sidelen = x1 - x0 + 1
+	local facearea = sidelen ^ 2
 	local chulens = {x=sidelen, y=sidelen, z=sidelen}
 	local minpos = {x=x0, y=y0, z=z0}
 	
@@ -303,12 +321,15 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			local nodrad = math.sqrt((x - SPHEX) ^ 2 + (y - SPHEY) ^ 2 + (z - SPHEZ) ^ 2)
 			if dyson then
 				grad = (nodrad - SPHER) / TERRS
-			else -- planet
+			else
 				grad = (SPHER - nodrad) / TERRS
 			end
 		elseif tube then
 			local nodrad = math.sqrt((y - CYLY) ^ 2 + (z - CYLZ) ^ 2)
-			grad = (nodrad - CYLR) / TERRS -- terrain density field
+			grad = (nodrad - CYLR) / TERRS
+		elseif cube then
+			local noddis = math.max(math.abs(x), math.abs(y), math.abs(z))
+			grad = (CUBER - noddis) / TERRS
 		end
 		
 		if tube then
@@ -375,7 +396,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			and z-z0 >= 1 and z1 - z >= 1 then
 				tree = true
 			end
-			if tree or ni == 6482 then -- set treedir at first non-border node for water selection
+			if tree or ni == facearea + sidelen + 2 then -- set treedir at first non-border node for water selection
 				local sphedis = SPHER * 0.707 
 				local cyldis = CYLR * 0.707 
 				if vertical then
@@ -385,10 +406,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				elseif flex then
 					local nxp = nvals4[ni + 1] -- 1 east
 					local nxn = nvals4[ni - 1] -- 2 west
-					local nyp = nvals4[ni + 80] -- 3 up
-					local nyn = nvals4[ni - 80] -- 4 down
-					local nzp = nvals4[ni + 6400] -- 5 north
-					local nzn = nvals4[ni - 6400] -- 6 south
+					local nyp = nvals4[ni + sidelen] -- 3 up
+					local nyn = nvals4[ni - sidelen] -- 4 down
+					local nzp = nvals4[ni + facearea] -- 5 north
+					local nzn = nvals4[ni - facearea] -- 6 south
 					local nlo = math.min(nxp, nxn, nyp, nyn, nzp, nzn)
 					if nxp == nlo then
 						treedir = 1
@@ -439,6 +460,20 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					elseif CYLZ - z > cyldis then
 						treedir = 5
 					else
+						treedir = 6
+					end
+				elseif cube then
+					if y > math.abs(x) and y > math.abs(z) then
+						treedir = 3
+					elseif y < -math.abs(x) and y < -math.abs(z) then
+						treedir = 4
+					elseif x > math.abs(y) and x > math.abs(z) then
+						treedir = 1
+					elseif x < -math.abs(y) and x < -math.abs(z) then
+						treedir = 2
+					elseif z > math.abs(x) and z > math.abs(y) then
+						treedir = 5
+					elseif z < -math.abs(x) and z < -math.abs(y) then
 						treedir = 6
 					end
 				else -- flat realm
@@ -601,7 +636,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				local xrq = 16 * math.floor((x - x0) / 16)
 				local yrq = 16 * math.floor((y - y0) / 16)
 				local zrq = 16 * math.floor((z - z0) / 16)
-				local qixyz = zrq * 6400 + yrq * 80 + xrq + 1
+				local qixyz = zrq * facearea + yrq * sidelen + xrq + 1
 				if nvals_cloud[qixyz] > TCLOUD and grad < -0.895 + nvals9[ni] * 0.005 then
 					data[vi] = c_flrcloud
 				end
