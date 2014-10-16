@@ -637,6 +637,7 @@ function flexrealm_jungrass(x, y, z, treedir, area, data)
 		local via = area:index(x + 1, y, z)
 		data[via] = c_jungrass
 	elseif treedir == 2 then
+		local via = area:index(x - 1, y, z)
 		data[via] = c_jungrass
 	elseif treedir == 3 then	
 		local via = area:index(x , y + 1, z)
