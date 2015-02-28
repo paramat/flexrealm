@@ -1,14 +1,14 @@
--- flexrealm 0.4.0
+-- flexrealm 0.4.1
 
 -- Variables
 
 local flat = false -- Normal flat realm
 local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
-local planet = true -- Planet sphere
+local planet = false -- Planet sphere
 local dysonsphere = false -- Dyson sphere
 local tube = false -- East-West tube world / O'Neill space colony
-local cube = false -- Planet cube
+local cube = true -- Planet cube
 local dysoncube = false -- Dyson cube
 
 local limit = {
@@ -20,7 +20,7 @@ local limit = {
 	ZMAX = 33000,
 }
 
-local TERRS = 128 -- Terrain scale for all realms below
+local TERRS = 64 -- Terrain scale for all realms below
 -- Normal and inverted flat realms
 local FLATY = 0 -- Surface y
 -- Vertical flat realm facing south
@@ -29,52 +29,46 @@ local VERTZ = 0 -- Surface z
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
 local SPHEY = 0 -- ..y 
-local SPHER = 128 -- Surface radius
+local SPHER = 256 -- Surface radius
 -- Tube realm
 local CYLZ = 0 -- Axis z
 local CYLY = 0 -- ..y
-local CYLR = 512 -- Surface radius
+local CYLR = 256 -- Surface radius
 local CYLEX = 4000 -- Endcap base +-x
-local CYLEW = 512 -- Endcap dish depth
+local CYLEW = 256 -- Endcap dish depth
 -- Cube and dyson cube realm
 local CUBEX = 0 -- Centre x
 local CUBEZ = 0 -- ..z
 local CUBEY = 0 -- ..y 
-local CUBER = 512 -- Surface radius
+local CUBER = 256 -- Surface radius
 
 -- Noise thresholds for density gradient 'grad'
-local DEPT = 2 --  -- Realm +-depth density threshold
-local ROCK = -1 --  -- Rocky terrain density threshold
-local CLLT = -0.9 --  -- Cloud low density threshold
-local CLHT = -0.89 --  -- Cloud high density threshold
+local DEPT = 2 -- Realm +-depth density threshold
+local ROCK = -1 -- Rocky terrain density threshold
+local CLOLOT = -0.9 -- Cloud low density threshold
+local CLOHIT = -0.89 -- Cloud high density threshold
 -- Noise thresholds for density field 'density'
-local STOT = 0.10 --  -- Stone density threshold at sea level
-local DIRT = 0.05 --  -- Dirt density threshold
-local TRET = 0.01 --  -- Tree growth density threshold
+local STOT = 0.10 -- Stone density threshold at sea level
+local DIRT = 0.05 -- Dirt density threshold
+local TRET = 0.01 -- Tree growth density threshold
 
 -- Other parameters
-local TFIS = 0.02 -- Fissure width
-local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
-local TCLOUD = 0.5 --  -- Cloud threshold, -2 = overcast, 2 = no cloud
-local HTET = 0.2 --  -- Desert / savanna / rainforest temperature noise threshold.
-local LTET = -0.4 --  -- Tundra / taiga temperature noise threshold.
-local HWET = 0.2 --  -- Wet grassland / rainforest wetness noise threshold.
-local LWET = -0.4 --  -- Tundra / dry grassland / desert wetness noise threshold.
-local BIOR = 0.02 --  -- Biome noise randomness for blend dithering
+local TFIS = 0.02 -- Fissure width nose threshold
+local OCHA = 7*7*7 -- Ore 1/x chance per stone node
+local TCLOUD = 0.5 -- Cloud threshold, -2 = overcast, 2 = no cloud
+local HITET = 0.4 -- High temperature noise threshold
+local LOTET = -0.4 -- Low temperature noise threshold
+local ICETET = -0.8 -- Icesheet / glacier temperature threshold
+local HUT = 0 --  -- Humidity noise threshold
 
 local flora = {
-	ATCHA = 49, --  -- Apple tree maximum 1/x chance per surface node
-	PTCHA = 49, --  -- Pine tree maximum 1/x chance per surface node
-	STCHA = 529, --  -- Savanna tree maximum 1/x chance per surface node
-	JTCHA = 16, --  -- Jungle tree maximum 1/x chance per surface node
-	DEGCHA = 9, --  -- Grass 1/x chance per surface node
-	SAGCHA = 5, --  -- Savanna grass 1/x chance per surface node
-	DRGCHA = 5, --  -- Dry grassland grass 1/x chance per surface node
-	WEGCHA = 5, --  -- Wet grassland grass 1/x chance per surface node
-	DUGCHA = 5, --  -- Dune grass 1/x chance per surface node
-	PAPCHA = 3, --  -- Papyrus 1/x chance per surface swamp water node
-	DEFCHA = 47 ^ 2, --  -- Flower 1/x chance per surface node
-	CACHA = 361, --  -- Cactus 1/x chance per surface node
+	APPCHA = 49, -- Apple tree maximum 1/x chance per surface node
+	PINCHA = 49, -- Pine tree maximum 1/x chance per surface node
+	JUTCHA = 16, -- Jungle tree maximum 1/x chance per surface node
+	FLOCHA = 47 ^ 2, -- Flower 1/x chance per surface node
+	GRACHA = 9, -- Grass 1/x chance per surface node
+	PAPCHA = 3, -- Papyrus 1/x chance per surface swamp water node
+	CACCHA = 361, -- Cactus 1/x chance per surface node
 }
 
 -- Noise parameters
@@ -84,9 +78,9 @@ local flora = {
 local np_terrain = {
 	offset = 0,
 	scale = 1,
-	spread = {x=512, y=512, z=512},
+	spread = {x=384, y=384, z=384},
 	seed = 92,
-	octaves = 6,
+	octaves = 5,
 	persist = 0.63
 }
 
@@ -95,9 +89,9 @@ local np_terrain = {
 local np_smooth = {
 	offset = 0,
 	scale = 1,
-	spread = {x=828, y=828, z=828},
+	spread = {x=621, y=621, z=621},
 	seed = 800911,
-	octaves = 5,
+	octaves = 4,
 	persist = 0.4
 }
 
@@ -106,10 +100,10 @@ local np_smooth = {
 local np_terblen = {
 	offset = 0,
 	scale = 1,
-	spread = {x=670, y=670, z=670},
+	spread = {x=256, y=256, z=256},
 	seed = -440002,
 	octaves = 3,
-	persist = 0.33
+	persist = 0.4
 }
 
 -- 3D noise for faults and rivers
@@ -117,9 +111,9 @@ local np_terblen = {
 local np_fault = {
 	offset = 0,
 	scale = 1,
-	spread = {x=512, y=512, z=512},
+	spread = {x=384, y=384, z=384},
 	seed = 14440002,
-	octaves = 5,
+	octaves = 4,
 	persist = 0.5
 }
 
@@ -128,10 +122,10 @@ local np_fault = {
 local np_temp = {
 	offset = 0,
 	scale = 1,
-	spread = {x=1024, y=1024, z=1024},
+	spread = {x=512, y=512, z=512},
 	seed = 9130,
-	octaves = 2,
-	persist = 0.33
+	octaves = 3,
+	persist = 0.4
 }
 
 -- 3D noise for humidity
@@ -139,10 +133,10 @@ local np_temp = {
 local np_humid = {
 	offset = 0,
 	scale = 1,
-	spread = {x=1024, y=1024, z=1024},
+	spread = {x=512, y=512, z=512},
 	seed = -55500,
-	octaves = 2,
-	persist = 0.33
+	octaves = 3,
+	persist = 0.4
 }
 
 -- 3D noise for fissures
@@ -222,9 +216,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_snowblock = minetest.get_content_id("default:snowblock")
 	local c_ice = minetest.get_content_id("default:ice")
 	local c_sastone = minetest.get_content_id("default:sandstone")
-	local c_watsour = minetest.get_content_id("default:water_source")
-	local c_dirt = minetest.get_content_id("default:dirt")
-	local c_clay = minetest.get_content_id("default:clay")
 	
 	local c_flrdirt = minetest.get_content_id("flexrealm:dirt")
 	local c_flrgrass = minetest.get_content_id("flexrealm:grass")
@@ -233,13 +224,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local c_flrstone = minetest.get_content_id("flexrealm:stone")
 	local c_flrdestone = minetest.get_content_id("flexrealm:destone")
 	local c_flrcloud = minetest.get_content_id("flexrealm:cloud")
-	local c_flrdrygrass = minetest.get_content_id("flexrealm:drygrass")
-	local c_flrfrograss = minetest.get_content_id("flexrealm:frograss")
 	local c_flrperfrost = minetest.get_content_id("flexrealm:perfrost")
 	local c_flrwatzero = minetest.get_content_id("flexrealm:watzero")
-	local c_flrwatfour = minetest.get_content_id("flexrealm:watfour")
 	local c_flrswatzero = minetest.get_content_id("flexrealm:swatzero")
-	local c_flrswatfour = minetest.get_content_id("flexrealm:swatfour")
 	local c_flrlavazero = minetest.get_content_id("flexrealm:lavazero")
 	
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
@@ -270,16 +257,13 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_cloud   = nobj_cloud:get3dMap_flat(minpos)
 
 	local ni = 1
-	local nodrot = 4 -- set to upside down to place non-flowing water before updir
+	local nodrot = 20 -- set to upside down to place non-flowing water before nodrot
 	for z = z0, z1 do			-- is recalculated for node at ni = 6482
 	for y = y0, y1 do
 	local vi = area:index(x0, y, z)
 	for x = x0, x1 do
 		local nodid = data[vi]
-		local density
-		local terno
-		local grad
-		local cubexr, cubeyr, cubezr
+		local density, terno, grad, cubexr, cubeyr, cubezr
 		-- terrain blend
 		local n_fault = nvals_fault[ni]
 		local n_terblen = nvals_terblen[ni]
@@ -333,39 +317,32 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local stot = STOT * (1 - grad / ROCK)
 		local altprop = math.max(1 + grad, 0)
 		-- get biome
-		local temp, humid
 		local n_humid = nvals_humid[ni]
 		local desert = false -- desert biome
-		local savanna = false -- savanna biome
-		local raforest = false -- rainforest biome
-		local wetgrass = false -- wet grassland biome
-		local drygrass = false -- dry grassland biome
-		local deforest = false -- deciduous forest biome
+		local rainforest = false -- rainforest biome
+		local grassland = false -- grassland biome
+		local forest = false -- deciduous forest biome
 		local tundra = false -- tundra biome
 		local taiga = false -- taiga forest biome
+		local temp = nvals_temp[ni] + grad
+		local humid = n_humid + grad
 		if density > 0 or grad > 0 then -- if terrain or water calculate biome
-			temp = nvals_temp[ni] + grad
-			humid = n_humid + grad
-			if temp > HTET + (math.random() - 0.5) * BIOR then
-				if humid > HWET + (math.random() - 0.5) * BIOR then
-					raforest = true
-				elseif humid < LWET + (math.random() - 0.5) * BIOR then
-					desert = true
+			if temp > HITET then
+				if humid > HUT then
+					rainforest = true
 				else
-					savanna = true
+					desert = true
 				end
-			elseif temp < LTET + (math.random() - 0.5) * BIOR then
-				if humid < LWET + (math.random() - 0.5) * BIOR then
+			elseif temp < LOTET then
+				if humid < HUT then
 					tundra = true
 				else
 					taiga = true
 				end
-			elseif humid > HWET + (math.random() - 0.5) * BIOR then
-				wetgrass = true
-			elseif humid < LWET + (math.random() - 0.5) * BIOR then
-				drygrass = true
+			elseif humid > HUT then
+				forest = true
 			else
-				deforest = true
+				grassland = true
 			end
 		end
 		-- caves boolean
@@ -378,95 +355,94 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		and z > z0 and z < z1 then
 			tree = true
 		end
-		if tree or ni == facearea + sidelen + 2 then -- set treedir at first non-border
+		-- nodrot 0 = y+, 4 = z+, 8 = z-, 12 = x+, 16 = x-, 20 = y-
+		if tree or ni == facearea + sidelen + 2 then -- set nodrot at first non-border
 			local sphedis = SPHER * 0.707 		-- node for water selection
 			local cyldis = CYLR * 0.707 
 			if flat then
-				nodrot = 3
+				nodrot = 0
 			elseif vertical then
-				nodrot = 6
-			elseif invert then
 				nodrot = 4
+			elseif invert then
+				nodrot = 20
 			elseif dysonsphere then
 				if SPHEY - y > sphedis then
-					nodrot = 3
+					nodrot = 0
 				elseif y - SPHEY > sphedis then
-					nodrot = 4
+					nodrot = 20
 				elseif SPHEX - x > sphedis then
-					nodrot = 1
+					nodrot = 12
 				elseif x - SPHEX > sphedis then
-					nodrot = 2
+					nodrot = 16
 				elseif SPHEZ - z  > sphedis then
-					nodrot = 5
+					nodrot = 4
 				else
-					nodrot = 6
+					nodrot = 8
 				end
 			elseif planet then
 				if y - SPHEY > sphedis then
-					nodrot = 3
+					nodrot = 0
 				elseif SPHEY - y > sphedis then
-					nodrot = 4
+					nodrot = 20
 				elseif x - SPHEX > sphedis then
-					nodrot = 1
+					nodrot = 12
 				elseif SPHEX - x > sphedis then
-					nodrot = 2
+					nodrot = 16
 				elseif z - SPHEZ > sphedis then
-					nodrot = 5
+					nodrot = 4
 				else
-					nodrot = 6
+					nodrot = 8
 				end
 			elseif tube then
 				if CYLY - y > cyldis then
-					nodrot = 3
+					nodrot = 0
 				elseif y - CYLY > cyldis then
-					nodrot = 4
+					nodrot = 20
 				elseif CYLZ - z > cyldis then
-					nodrot = 5
+					nodrot = 4
 				else
-					nodrot = 6
+					nodrot = 8
 				end
 			elseif cube then
 				if cubeyr > math.abs(cubexr)
 				and cubeyr > math.abs(cubezr) then
-					nodrot = 3
+					nodrot = 0
 				elseif cubeyr < -math.abs(cubexr)
 				and cubeyr < -math.abs(cubezr) then
-					nodrot = 4
+					nodrot = 20
 				elseif cubexr > math.abs(cubeyr)
 				and cubexr > math.abs(cubezr) then
-					nodrot = 1
+					nodrot = 12
 				elseif cubexr < -math.abs(cubeyr)
 				and cubexr < -math.abs(cubezr) then
-					nodrot = 2
+					nodrot = 16
 				elseif cubezr > math.abs(cubexr)
 				and cubezr > math.abs(cubeyr) then
-					nodrot = 5
+					nodrot = 4
 				elseif cubezr < -math.abs(cubexr)
 				and cubezr < -math.abs(cubeyr) then
-					nodrot = 6
+					nodrot = 8
 				end
 			elseif dysoncube then
 				if cubeyr > math.abs(cubexr)
 				and cubeyr > math.abs(cubezr) then
-					nodrot = 4
+					nodrot = 20
 				elseif cubeyr < -math.abs(cubexr)
 				and cubeyr < -math.abs(cubezr) then
-					nodrot = 3
+					nodrot = 0
 				elseif cubexr > math.abs(cubeyr)
 				and cubexr > math.abs(cubezr) then
-					nodrot = 2
+					nodrot = 16
 				elseif cubexr < -math.abs(cubeyr)
 				and cubexr < -math.abs(cubezr) then
-					nodrot = 1
+					nodrot = 12
 				elseif cubezr > math.abs(cubexr)
 				and cubezr > math.abs(cubeyr) then
-					nodrot = 6
+					nodrot = 8
 				elseif cubezr < -math.abs(cubexr)
 				and cubezr < -math.abs(cubeyr) then
-					nodrot = 5
+					nodrot = 4
 				end
-			else
-				nodrot = 3
 			end
 		end
 		-- mapgen
@@ -475,15 +451,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		and grad <= 0.12 and (density > 0 or grad > 0) then
 			if grad > 0.1 and density > 0 then
 				data[vi] = c_flrsand
-			elseif (density >= 0.1 and not desert) or grad > 0 then
-				if tundra or taiga then		 -- dry river in deserts
+			elseif density >= 0.1 or grad > 0 then
+				if temp < ICETET then
 					data[vi] = c_ice
 				else
-					if nodrot == 3 then
-						data[vi] = c_flrwatfour
-					else
-						data[vi] = c_flrwatzero
-					end
+					data[vi] = c_flrwatzero
 				end
 			end
 		elseif n_faultabs > 0.03 * (1 - (density / 0.25) ^ 2) * altprop -- river sand
@@ -517,81 +489,51 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			end
 		elseif density > 0 and density < stot then -- fine materials
 			if grad >= -0.04 + n_terblen * 0.08 then -- beaches
-				if taiga and density < DIRT and grad <= 0 then -- snowy beach
-					data[vi] = c_snowblock
-				elseif deforest and grad > 0.05 and grad < 0.057 then -- clay
-					data[vi] = c_clay
-				else
-					data[vi] = c_flrsand -- sand
-					if tree and grad < -0.03
-					and math.random(flora.DUGCHA) == 2 then
-						flexrealm_dryshrub(x, y, z, treedir, area, data)
-					end
-				end
+				data[vi] = c_flrsand -- sand
 			elseif nofis or (not nofis and grad > 0) then -- fine materials cut by
 				if density >= DIRT then		-- fissures above sea level only
 					if desert then
 						data[vi] = c_flrdesand
 					elseif tundra then
 						data[vi] = c_flrperfrost
-					elseif drygrass or savanna then
-						data[vi] = c_flrdirt -- doesnt turn to green grass
 					else
-						data[vi] = c_dirt
+						data[vi] = c_flrdirt
 					end
 				else -- else surface nodes
 					if taiga then
-						if tree and math.random(flora.PTCHA) == 2 then
+						if tree and math.random(flora.PINCHA) == 2 then
 							flexrealm_pinetree(x, y, z, nodrot, area, data)
 						else
 							data[vi] = c_snowblock
 						end
-					elseif deforest then
+					elseif tundra then
+						data[vi] = c_snowblock
+					elseif forest then
 						data[vi] = c_flrgrass
-						if tree and math.random(flora.ATCHA) == 2 then
+						if tree and math.random(flora.APPCHA) == 2 then
 							flexrealm_appletree(x, y, z, nodrot, area, data)
 						elseif tree and grad <= 0
-						and math.random(flora.DEFCHA) == 2 then
+						and math.random(flora.FLOCHA) == 2 then
 							flexrealm_flower(x, y, z, nodrot, area, data)
 						elseif tree and grad <= 0
-						and math.random(flora.DEGCHA) == 2 then
+						and math.random(flora.GRACHA) == 2 then
 							flexrealm_grass(x, y, z, nodrot, area, data)
 						end
-					elseif savanna then
-						data[vi] = c_flrdrygrass
-						if tree and math.random(flora.STCHA) == 2 then
-							flexrealm_savannatree(x, y, z, nodrot, area, data)
-						elseif tree and grad <= 0
-						and math.random(flora.SAGCHA) == 2 then
-							flexrealm_dryshrub(x, y, z, nodrot, area, data)
+					elseif grassland then
+						data[vi] = c_flrgrass
+						if tree and grad <= 0
+						and math.random(flora.GRACHA) == 2 then
+							flexrealm_grass(x, y, z, nodrot, area, data)
 						end
-					elseif raforest then
-						if tree and math.random(flora.JTCHA) == 2 then
+					elseif rainforest then
+						if tree and math.random(flora.JUTCHA) == 2 then
 							flexrealm_jungletree(x, y, z, nodrot, area, data)
 						else
 							data[vi] = c_flrgrass
 						end
-					elseif drygrass then
-						data[vi] = c_flrdrygrass
-						if tree and grad <= 0
-						and math.random(flora.DRGCHA) == 2 then
-							flexrealm_dryshrub(x, y, z, nodrot, area, data)
-						end
-					elseif wetgrass then
-						data[vi] = c_flrgrass
-						if tree and grad <= 0
-						and math.random(flora.WEGCHA) == 2 then
-							if math.random(3) == 2 then
-								flexrealm_grass(x, y, z, nodrot, area, data)
-							else
-								flexrealm_jungrass(x, y, z, nodrot, area, data)
-							end
-						end
-					elseif tundra then
-						data[vi] = c_flrfrograss
 					elseif desert then
-						if tree and humid > LWET - 0.2
-						and math.random(flora.CACHA) == 2 then
+						if tree and humid > HUT - 0.2
+						and math.random(flora.CACCHA) == 2 then
 							flexrealm_cactus(x, y, z, nodrot, area, data)
 						else
 							data[vi] = c_flrdesand
@@ -599,32 +541,26 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					end
 				end
 			end
-		elseif taiga and grad > 0 and grad <= 0.05 and density <= 0 then -- ice sheets
+		elseif temp < ICETET and grad > 0 and grad <= 0.05 and density <= 0 then -- ice sheets
 			if nodid == c_air then
 				data[vi] = c_ice
 			end
 		elseif grad > 0 and density <= 0 then
 			if nodid == c_air then
 				if n_terblen > 0.2 and density > -0.01 + (math.random() - 0.5) * 0.005
-				and grad < 0.02 and (desert or savanna or raforest) then
-					if nodrot == 3 then -- swampwater
-						data[vi] = c_flrswatfour
-					else
-						data[vi] = c_flrswatzero
-					end
+				and grad < 0.02 and (desert or rainforest) then
+					data[vi] = c_flrswatzero -- swampwater
 					if math.random(flora.PAPCHA) == 2 then -- papyrus
-						flexrealm_papyrus(x, y, z, treedir, area, data)
-					end 
-				elseif nodrot == 3 then -- water
-					data[vi] = c_flrwatfour
+						flexrealm_papyrus(x, y, z, nodrot, area, data)
+					end
 				else
-					data[vi] = c_flrwatzero
+					data[vi] = c_flrwatzero -- water
 				end
 			end
 		elseif not nofis and grad > 0 and density > 0 and grad <= DEPT
 		and ((n_fault > -0.45 and n_fault < -0.35) or (n_fault > 0.35 and n_fault < 0.45)) then
 			data[vi] = c_flrsand -- sand blocking fissures in faults below water level
-		elseif grad >= CLLT and grad <= CLHT then -- clouds
+		elseif grad >= CLOLOT and grad <= CLOHIT then -- clouds
 			local xrq = 16 * math.floor((x - x0) / 16)
 			local yrq = 16 * math.floor((y - y0) / 16)
 			local zrq = 16 * math.floor((z - z0) / 16)
@@ -648,3 +584,4 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local chugent = math.ceil((os.clock() - t0) * 1000)
 	print ("[flexrealm] "..chugent.." ms  minp ("..x0.." "..y0.." "..z0..")")
 end)
+
