@@ -1,8 +1,8 @@
-function flexrealm_appletree(x, y, z, treedir, area, data)
+function flexrealm_appletree(x, y, z, nodrot, area, data)
 	local c_tree = minetest.get_content_id("default:tree")
 	local c_apple = minetest.get_content_id("default:apple")
 	local c_leaves = minetest.get_content_id("default:leaves")
-	if treedir == 1 then
+	if nodrot == 1 then
 		for i = -1, 5 do
 			if i >= 3 and i <= 5 then
 				for j = -2, 2 do
@@ -19,7 +19,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data)
 			local vit = area:index(x + i, y, z)
 			data[vit] = c_tree
 		end
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		for i = -1, 5 do
 			if i >= 3 and i <= 5 then
 				for j = -2, 2 do
@@ -36,7 +36,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data)
 			local vit = area:index(x - i, y, z)
 			data[vit] = c_tree
 		end
-	elseif treedir == 3 then
+	elseif nodrot == 3 then
 		for j = -1, 5 do
 			if j >= 3 and j <= 5 then
 				for i = -2, 2 do
@@ -53,7 +53,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y + j, z)
 			data[vit] = c_tree
 		end
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		for j = -1, 5 do
 			if j >= 3 and j <= 5 then
 				for i = -2, 2 do
@@ -70,7 +70,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y - j, z)
 			data[vit] = c_tree
 		end
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		for k = -1, 5 do
 			if k >= 3 and k <= 5 then
 				for i = -2, 2 do
@@ -87,7 +87,7 @@ function flexrealm_appletree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y, z + k)
 			data[vit] = c_tree
 		end
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		for k = -1, 5 do
 			if k >= 3 and k <= 5 then
 				for i = -2, 2 do
@@ -107,11 +107,11 @@ function flexrealm_appletree(x, y, z, treedir, area, data)
 	end
 end
 
-function flexrealm_pinetree(x, y, z, treedir, area, data)
+function flexrealm_pinetree(x, y, z, nodrot, area, data)
 	local c_tree = minetest.get_content_id("default:tree")
 	local c_flrneedles = minetest.get_content_id("flexrealm:needles")
 	local c_snowblock = minetest.get_content_id("default:snowblock")
-	if treedir == 1 then
+	if nodrot == 1 then
 		for i = -2, 11 do
 		for j = -1, 1 do
 		for k = -1, 1 do
@@ -154,7 +154,7 @@ function flexrealm_pinetree(x, y, z, treedir, area, data)
 		end
 		end
 		end
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		for i = -2, 11 do
 		for j = -1, 1 do
 		for k = -1, 1 do
@@ -197,7 +197,7 @@ function flexrealm_pinetree(x, y, z, treedir, area, data)
 		end
 		end
 		end
-	elseif treedir == 3 then
+	elseif nodrot == 3 then
 		for j = -2, 11 do
 		for i = -1, 1 do
 		for k = -1, 1 do
@@ -240,7 +240,7 @@ function flexrealm_pinetree(x, y, z, treedir, area, data)
 		end
 		end
 		end
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		for j = -2, 11 do
 		for i = -1, 1 do
 		for k = -1, 1 do
@@ -283,7 +283,7 @@ function flexrealm_pinetree(x, y, z, treedir, area, data)
 		end
 		end
 		end
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		for k = -2, 11 do
 		for i = -1, 1 do
 		for j = -1, 1 do
@@ -326,7 +326,7 @@ function flexrealm_pinetree(x, y, z, treedir, area, data)
 		end
 		end
 		end
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		for k = -2, 11 do
 		for i = -1, 1 do
 		for j = -1, 1 do
@@ -372,10 +372,10 @@ function flexrealm_pinetree(x, y, z, treedir, area, data)
 	end
 end
 
-function flexrealm_savannatree(x, y, z, treedir, area, data)
+function flexrealm_savannatree(x, y, z, nodrot, area, data)
 	local c_tree = minetest.get_content_id("default:tree")
 	local c_flrsavleaf = minetest.get_content_id("flexrealm:savleaf")
-	if treedir == 1 then
+	if nodrot == 1 then
 		for i = -2, 6 do
 			if i >= 5 then
 				for j = -3, 3 do
@@ -390,7 +390,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data)
 			local vit = area:index(x + i, y, z)
 			data[vit] = c_tree
 		end
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		for i = -2, 6 do
 			if i >= 5 then
 				for j = -3, 3 do
@@ -405,7 +405,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data)
 			local vit = area:index(x - i, y, z)
 			data[vit] = c_tree
 		end
-	elseif treedir == 3 then
+	elseif nodrot == 3 then
 		for j = -2, 6 do
 			if j >= 5 then
 				for i = -3, 3 do
@@ -420,7 +420,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y + j, z)
 			data[vit] = c_tree
 		end
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		for j = -2, 6 do
 			if j >= 5 then
 				for i = -3, 3 do
@@ -435,7 +435,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y - j, z)
 			data[vit] = c_tree
 		end
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		for k = -2, 6 do
 			if k >= 5 then
 				for i = -3, 3 do
@@ -450,7 +450,7 @@ function flexrealm_savannatree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y, z + k)
 			data[vit] = c_tree
 		end
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		for k = -2, 6 do
 			if k >= 5 then
 				for i = -3, 3 do
@@ -468,10 +468,10 @@ function flexrealm_savannatree(x, y, z, treedir, area, data)
 	end
 end
 
-function flexrealm_jungletree(x, y, z, treedir, area, data)
+function flexrealm_jungletree(x, y, z, nodrot, area, data)
 	local c_juntree = minetest.get_content_id("default:jungletree")
 	local c_flrjunleaf = minetest.get_content_id("flexrealm:junleaf")
-	if treedir == 1 then
+	if nodrot == 1 then
 		for i = -4, 17 do
 			if i == 11 or i == 17 then
 				for j = -2, 2 do
@@ -486,7 +486,7 @@ function flexrealm_jungletree(x, y, z, treedir, area, data)
 			local vit = area:index(x + i, y, z)
 			data[vit] = c_juntree
 		end
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		for i = -4, 17 do
 			if i == 11 or i == 17 then
 				for j = -2, 2 do
@@ -501,7 +501,7 @@ function flexrealm_jungletree(x, y, z, treedir, area, data)
 			local vit = area:index(x - i, y, z)
 			data[vit] = c_juntree
 		end
-	elseif treedir == 3 then
+	elseif nodrot == 3 then
 		for j = -4, 17 do
 			if j == 11 or j == 17 then
 				for i = -2, 2 do
@@ -516,7 +516,7 @@ function flexrealm_jungletree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y + j, z)
 			data[vit] = c_juntree
 		end
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		for j = -4, 17 do
 			if j == 3 or j == 17 then
 				for i = -2, 2 do
@@ -531,7 +531,7 @@ function flexrealm_jungletree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y - j, z)
 			data[vit] = c_juntree
 		end
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		for k = -4, 17 do
 			if k == 3 or k == 17 then
 				for i = -2, 2 do
@@ -546,7 +546,7 @@ function flexrealm_jungletree(x, y, z, treedir, area, data)
 			local vit = area:index(x, y, z + k)
 			data[vit] = c_juntree
 		end
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		for k = -4, 17 do
 			if k == 11 or k == 17 then
 				for i = -2, 2 do
@@ -585,104 +585,104 @@ function flexrealm_randgrass(data, via)
 		end
 end
 
-function flexrealm_grass(x, y, z, treedir, area, data)
-	if treedir == 1 then
+function flexrealm_grass(x, y, z, nodrot, area, data)
+	if nodrot == 1 then
 		local via = area:index(x + 1, y, z)
 		flexrealm_randgrass(data, via)
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		local via = area:index(x - 1 , y, z)
 		flexrealm_randgrass(data, via)
-	elseif treedir == 3 then	
+	elseif nodrot == 3 then	
 		local via = area:index(x, y + 1, z)
 		flexrealm_randgrass(data, via)
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		local via = area:index(x, y - 1, z)
 		flexrealm_randgrass(data, via)
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		local via = area:index(x, y, z + 1)
 		flexrealm_randgrass(data, via)
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		local via = area:index(x, y, z - 1)
 		flexrealm_randgrass(data, via)
 	end
 end
 
 
-function flexrealm_dryshrub(x, y, z, treedir, area, data)
+function flexrealm_dryshrub(x, y, z, nodrot, area, data)
 	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
-	if treedir == 1 then
+	if nodrot == 1 then
 		local via = area:index(x + 1, y, z)
 		data[via] = c_dryshrub
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		local via = area:index(x - 1, y, z)
 		data[via] = c_dryshrub
-	elseif treedir == 3 then	
+	elseif nodrot == 3 then	
 		local via = area:index(x , y + 1, z)
 		data[via] = c_dryshrub
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		local via = area:index(x , y - 1, z)
 		data[via] = c_dryshrub
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		local via = area:index(x , y , z + 1)
 		data[via] = c_dryshrub
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		local via = area:index(x , y , z - 1)
 		data[via] = c_dryshrub
 	end
 end
 
-function flexrealm_jungrass(x, y, z, treedir, area, data)
+function flexrealm_jungrass(x, y, z, nodrot, area, data)
 	local c_jungrass = minetest.get_content_id("default:junglegrass")
-	if treedir == 1 then
+	if nodrot == 1 then
 		local via = area:index(x + 1, y, z)
 		data[via] = c_jungrass
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		local via = area:index(x - 1, y, z)
 		data[via] = c_jungrass
-	elseif treedir == 3 then	
+	elseif nodrot == 3 then	
 		local via = area:index(x , y + 1, z)
 		data[via] = c_jungrass
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		local via = area:index(x , y - 1, z)
 		data[via] = c_jungrass
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		local via = area:index(x , y , z + 1)
 		data[via] = c_jungrass
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		local via = area:index(x , y , z - 1)
 		data[via] = c_jungrass
 	end
 end
 
-function flexrealm_papyrus(x, y, z, treedir, area, data)
+function flexrealm_papyrus(x, y, z, nodrot, area, data)
 	local c_flrpapyrus = minetest.get_content_id("flexrealm:papyrus")
 	local ph = math.random(1, 4)
-	if treedir == 1 then
+	if nodrot == 1 then
 		for i = 1, ph do
 			local vip = area:index(x + i, y, z)
 			data[vip] = c_flrpapyrus
 		end
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		for i = 1, ph do
 			local vip = area:index(x - i, y, z)
 			data[vip] = c_flrpapyrus
 		end
-	elseif treedir == 3 then
+	elseif nodrot == 3 then
 		for j = 1, ph do
 			local vip = area:index(x, y + j, z)
 			data[vip] = c_flrpapyrus
 		end
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		for j = 1, ph do
 			local vip = area:index(x, y - j, z)
 			data[vip] = c_flrpapyrus
 		end
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		for k = 1, ph do
 			local vip = area:index(x, y, z + k)
 			data[vip] = c_flrpapyrus
 		end
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		for k = 1, ph do
 			local vip = area:index(x, y, z - k)
 			data[vip] = c_flrpapyrus
@@ -713,31 +713,31 @@ function flexrealm_randflower(data, via)
 		end
 end
 
-function flexrealm_flower(x, y, z, treedir, area, data)
-	if treedir == 1 then
+function flexrealm_flower(x, y, z, nodrot, area, data)
+	if nodrot == 1 then
 		local via = area:index(x + 1, y, z)
 		flexrealm_randflower(data, via)
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		local via = area:index(x - 1, y, z)
 		flexrealm_randflower(data, via)
-	elseif treedir == 3 then	
+	elseif nodrot == 3 then	
 		local via = area:index(x , y + 1, z)
 		flexrealm_randflower(data, via)
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		local via = area:index(x , y - 1, z)
 		flexrealm_randflower(data, via)
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		local via = area:index(x , y , z + 1)
 		flexrealm_randflower(data, via)
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		local via = area:index(x , y , z - 1)
 		flexrealm_randflower(data, via)
 	end
 end
 
-function flexrealm_cactus(x, y, z, treedir, area, data)
+function flexrealm_cactus(x, y, z, nodrot, area, data)
 	local c_flrcactus = minetest.get_content_id("flexrealm:cactus")
-	if treedir == 1 then
+	if nodrot == 1 then
 		for i = -1, 5 do
 		for j = -2, 2 do
 			if j == 0 or i == 3 or (i == 4 and math.abs(j) == 2) then
@@ -746,7 +746,7 @@ function flexrealm_cactus(x, y, z, treedir, area, data)
 			end
 		end
 		end
-	elseif treedir == 2 then
+	elseif nodrot == 2 then
 		for i = -1, 5 do
 		for j = -2, 2 do
 			if j == 0 or i == 3 or (i == 4 and math.abs(j) == 2) then
@@ -755,7 +755,7 @@ function flexrealm_cactus(x, y, z, treedir, area, data)
 			end
 		end
 		end
-	elseif treedir == 3 then
+	elseif nodrot == 3 then
 		for j = -1, 5 do
 		for i = -2, 2 do
 			if i == 0 or j == 3 or (j == 4 and math.abs(i) == 2) then
@@ -764,7 +764,7 @@ function flexrealm_cactus(x, y, z, treedir, area, data)
 			end
 		end
 		end
-	elseif treedir == 4 then
+	elseif nodrot == 4 then
 		for j = -1, 5 do
 		for i = -2, 2 do
 			if i == 0 or j == 3 or (j == 4 and math.abs(i) == 2) then
@@ -773,7 +773,7 @@ function flexrealm_cactus(x, y, z, treedir, area, data)
 			end
 		end
 		end
-	elseif treedir == 5 then
+	elseif nodrot == 5 then
 		for k = -1, 5 do
 		for i = -2, 2 do
 			if i == 0 or k == 3 or (k == 4 and math.abs(i) == 2) then
@@ -782,7 +782,7 @@ function flexrealm_cactus(x, y, z, treedir, area, data)
 			end
 		end
 		end
-	elseif treedir == 6 then
+	elseif nodrot == 6 then
 		for k = -1, 5 do
 		for i = -2, 2 do
 			if i == 0 or k == 3 or (k == 4 and math.abs(i) == 2) then
@@ -793,3 +793,4 @@ function flexrealm_cactus(x, y, z, treedir, area, data)
 		end
 	end
 end
+

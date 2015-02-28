@@ -1,25 +1,15 @@
--- flexrealm 0.3.1 by paramat
--- For latest stable Minetest and back to 0.4.8
--- Depends default
--- Licenses: code WTFPL, textures CC BY-SA
-
--- remove lava
--- thin rivers with altitude
--- remove flexy realm option
--- cube centre parameters
--- add dyson cube
--- constant width fissures
+-- flexrealm 0.4.0
 
 -- Variables
 
 local flat = false -- Normal flat realm
 local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
-local planet = false -- Planet sphere
+local planet = true -- Planet sphere
 local dysonsphere = false -- Dyson sphere
 local tube = false -- East-West tube world / O'Neill space colony
 local cube = false -- Planet cube
-local dysoncube = true -- Dyson cube
+local dysoncube = false -- Dyson cube
 
 local limit = {
 	XMIN = -33000, -- Limits for all realm types
@@ -39,7 +29,7 @@ local VERTZ = 0 -- Surface z
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
 local SPHEY = 0 -- ..y 
-local SPHER = 1024 -- Surface radius
+local SPHER = 128 -- Surface radius
 -- Tube realm
 local CYLZ = 0 -- Axis z
 local CYLY = 0 -- ..y
@@ -61,6 +51,7 @@ local CLHT = -0.89 --  -- Cloud high density threshold
 local STOT = 0.10 --  -- Stone density threshold at sea level
 local DIRT = 0.05 --  -- Dirt density threshold
 local TRET = 0.01 --  -- Tree growth density threshold
+
 -- Other parameters
 local TFIS = 0.02 -- Fissure width
 local OCHA = 7*7*7 --  -- Ore 1/x chance per stone node
@@ -70,6 +61,7 @@ local LTET = -0.4 --  -- Tundra / taiga temperature noise threshold.
 local HWET = 0.2 --  -- Wet grassland / rainforest wetness noise threshold.
 local LWET = -0.4 --  -- Tundra / dry grassland / desert wetness noise threshold.
 local BIOR = 0.02 --  -- Biome noise randomness for blend dithering
+
 local flora = {
 	ATCHA = 49, --  -- Apple tree maximum 1/x chance per surface node
 	PTCHA = 49, --  -- Pine tree maximum 1/x chance per surface node
@@ -87,7 +79,7 @@ local flora = {
 
 -- Noise parameters
 
--- 3D noise 1 for terrain
+-- 3D noise for terrain
 
 local np_terrain = {
 	offset = 0,
@@ -98,7 +90,7 @@ local np_terrain = {
 	persist = 0.63
 }
 
--- 3D noise 7 for smooth terrain
+-- 3D noise for smooth terrain
 
 local np_smooth = {
 	offset = 0,
@@ -109,7 +101,7 @@ local np_smooth = {
 	persist = 0.4
 }
 
--- 3D noise 8 for terrain blend
+-- 3D noise for terrain blend
 
 local np_terblen = {
 	offset = 0,
@@ -120,7 +112,7 @@ local np_terblen = {
 	persist = 0.33
 }
 
--- 3D noise 6 for faults and rivers
+-- 3D noise for faults and rivers
 
 local np_fault = {
 	offset = 0,
@@ -131,7 +123,7 @@ local np_fault = {
 	persist = 0.5
 }
 
--- 3D noise 2 for temperature
+-- 3D noise for temperature
 
 local np_temp = {
 	offset = 0,
@@ -142,7 +134,7 @@ local np_temp = {
 	persist = 0.33
 }
 
--- 3D noise 9 for humidity
+-- 3D noise for humidity
 
 local np_humid = {
 	offset = 0,
@@ -153,7 +145,7 @@ local np_humid = {
 	persist = 0.33
 }
 
--- 3D noise 3 for fissures
+-- 3D noise for fissures
 
 local np_fissure = {
 	offset = 0,
@@ -181,7 +173,7 @@ dofile(minetest.get_modpath("flexrealm").."/nodes.lua")
 dofile(minetest.get_modpath("flexrealm").."/functions.lua")
 
 minetest.register_on_mapgen_init(function(mgparams)
-	minetest.set_mapgen_params({mgname="singlenode", water_level=-33000})
+	minetest.set_mapgen_params({mgname="singlenode", flags="nolight", water_level=-31000})
 end)
 
 minetest.register_on_joinplayer(function(player)
@@ -191,6 +183,17 @@ end)
 minetest.register_on_leaveplayer(function(player)
 	minetest.setting_set("enable_clouds", "true")
 end)
+
+-- Initialize noise objects to nil
+
+local nobj_terrain = nil
+local nobj_smooth = nil
+local nobj_terblen = nil
+local nobj_fault = nil
+local nobj_fissure = nil
+local nobj_temp = nil
+local nobj_humid = nil
+local nobj_cloud = nil
 
 -- On generated function
 
@@ -208,7 +211,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local x1 = maxp.x
 	local y1 = maxp.y
 	local z1 = maxp.z
-	print ("[flexrealm] chunk minp ("..x0.." "..y0.." "..z0..")")
 	
 	local c_air = minetest.get_content_id("air")
 	local c_meseblock = minetest.get_content_id("default:mese_block")
@@ -249,18 +251,27 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local chulens = {x=sidelen, y=sidelen, z=sidelen}
 	local minpos = {x=x0, y=y0, z=z0}
 
-	local nvals1 = minetest.get_perlin_map(np_terrain, chulens):get3dMap_flat(minpos)
-	local nvals2 = minetest.get_perlin_map(np_temp, chulens):get3dMap_flat(minpos)
-	local nvals3 = minetest.get_perlin_map(np_fissure, chulens):get3dMap_flat(minpos)
-	local nvals6 = minetest.get_perlin_map(np_fault, chulens):get3dMap_flat(minpos)
-	local nvals7 = minetest.get_perlin_map(np_smooth, chulens):get3dMap_flat(minpos)
-	local nvals8 = minetest.get_perlin_map(np_terblen, chulens):get3dMap_flat(minpos)
-	local nvals9 = minetest.get_perlin_map(np_humid, chulens):get3dMap_flat(minpos)
-	local nvals_cloud = minetest.get_perlin_map(np_cloud, chulens):get3dMap_flat(minpos)
-	
+	nobj_terrain = nobj_terrain or minetest.get_perlin_map(np_terrain, chulens)
+	nobj_smooth  = nobj_smooth  or minetest.get_perlin_map(np_smooth, chulens)
+	nobj_terblen = nobj_terblen or minetest.get_perlin_map(np_terblen, chulens)
+	nobj_fault   = nobj_fault   or minetest.get_perlin_map(np_fault, chulens)
+	nobj_fissure = nobj_fissure or minetest.get_perlin_map(np_fissure, chulens)
+	nobj_temp    = nobj_temp    or minetest.get_perlin_map(np_temp, chulens)
+	nobj_humid   = nobj_humid   or minetest.get_perlin_map(np_humid, chulens)
+	nobj_cloud   = nobj_cloud   or minetest.get_perlin_map(np_cloud, chulens)
+
+	local nvals_terrain = nobj_terrain:get3dMap_flat(minpos)
+	local nvals_smooth  = nobj_smooth:get3dMap_flat(minpos)
+	local nvals_terblen = nobj_terblen:get3dMap_flat(minpos)
+	local nvals_fault   = nobj_fault:get3dMap_flat(minpos)
+	local nvals_fissure = nobj_fissure:get3dMap_flat(minpos)
+	local nvals_temp    = nobj_temp:get3dMap_flat(minpos)
+	local nvals_humid   = nobj_humid:get3dMap_flat(minpos)
+	local nvals_cloud   = nobj_cloud:get3dMap_flat(minpos)
+
 	local ni = 1
-	local treedir = 4 -- set to upside down to place non-flowing water before treedir
-	for z = z0, z1 do				-- recalculated for node at ni = 6482
+	local nodrot = 4 -- set to upside down to place non-flowing water before updir
+	for z = z0, z1 do			-- is recalculated for node at ni = 6482
 	for y = y0, y1 do
 	local vi = area:index(x0, y, z)
 	for x = x0, x1 do
@@ -270,13 +281,13 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local grad
 		local cubexr, cubeyr, cubezr
 		-- terrain blend
-		local noise6 = nvals6[ni]
-		local noise8 = nvals8[ni]
-		local terblen = math.min(math.abs(noise8) * 2, 1)
-		if noise6 >= -0.4 and noise6 <= 0.4 then
-			terno = nvals1[ni] * (1 - terblen) + nvals7[ni] * terblen
+		local n_fault = nvals_fault[ni]
+		local n_terblen = nvals_terblen[ni]
+		local terblen = math.min(math.abs(n_terblen) * 2, 1)
+		if n_fault >= -0.4 and n_fault <= 0.4 then
+			terno = nvals_terrain[ni] * (1 - terblen) + nvals_smooth[ni] * terblen
 		else
-			terno = nvals1[ni] * (1 - terblen) - nvals7[ni] * terblen
+			terno = nvals_terrain[ni] * (1 - terblen) - nvals_smooth[ni] * terblen
 		end
 		-- noise gradient
 		if flat then
@@ -323,6 +334,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local altprop = math.max(1 + grad, 0)
 		-- get biome
 		local temp, humid
+		local n_humid = nvals_humid[ni]
 		local desert = false -- desert biome
 		local savanna = false -- savanna biome
 		local raforest = false -- rainforest biome
@@ -332,8 +344,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local tundra = false -- tundra biome
 		local taiga = false -- taiga forest biome
 		if density > 0 or grad > 0 then -- if terrain or water calculate biome
-			temp = nvals2[ni] + grad
-			humid = nvals9[ni] + grad
+			temp = nvals_temp[ni] + grad
+			humid = n_humid + grad
 			if temp > HTET + (math.random() - 0.5) * BIOR then
 				if humid > HWET + (math.random() - 0.5) * BIOR then
 					raforest = true
@@ -357,7 +369,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			end
 		end
 		-- caves boolean
-		local nofis = math.abs(nvals3[ni]) > TFIS
+		local nofis = math.abs(nvals_fissure[ni]) > TFIS
 		-- if surface node away from chunk boundary get up direction for trees
 		local tree = false
 		if density <= TRET -- surface node
@@ -370,94 +382,96 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			local sphedis = SPHER * 0.707 		-- node for water selection
 			local cyldis = CYLR * 0.707 
 			if flat then
-				treedir = 3
+				nodrot = 3
 			elseif vertical then
-				treedir = 6
+				nodrot = 6
 			elseif invert then
-				treedir = 4
-			elseif dyson then
+				nodrot = 4
+			elseif dysonsphere then
 				if SPHEY - y > sphedis then
-					treedir = 3
+					nodrot = 3
 				elseif y - SPHEY > sphedis then
-					treedir = 4
+					nodrot = 4
 				elseif SPHEX - x > sphedis then
-					treedir = 1
+					nodrot = 1
 				elseif x - SPHEX > sphedis then
-					treedir = 2
+					nodrot = 2
 				elseif SPHEZ - z  > sphedis then
-					treedir = 5
+					nodrot = 5
 				else
-					treedir = 6
+					nodrot = 6
 				end
 			elseif planet then
 				if y - SPHEY > sphedis then
-					treedir = 3
+					nodrot = 3
 				elseif SPHEY - y > sphedis then
-					treedir = 4
+					nodrot = 4
 				elseif x - SPHEX > sphedis then
-					treedir = 1
+					nodrot = 1
 				elseif SPHEX - x > sphedis then
-					treedir = 2
+					nodrot = 2
 				elseif z - SPHEZ > sphedis then
-					treedir = 5
+					nodrot = 5
 				else
-					treedir = 6
+					nodrot = 6
 				end
 			elseif tube then
 				if CYLY - y > cyldis then
-					treedir = 3
+					nodrot = 3
 				elseif y - CYLY > cyldis then
-					treedir = 4
+					nodrot = 4
 				elseif CYLZ - z > cyldis then
-					treedir = 5
+					nodrot = 5
 				else
-					treedir = 6
+					nodrot = 6
 				end
 			elseif cube then
 				if cubeyr > math.abs(cubexr)
 				and cubeyr > math.abs(cubezr) then
-					treedir = 3
+					nodrot = 3
 				elseif cubeyr < -math.abs(cubexr)
 				and cubeyr < -math.abs(cubezr) then
-					treedir = 4
+					nodrot = 4
 				elseif cubexr > math.abs(cubeyr)
 				and cubexr > math.abs(cubezr) then
-					treedir = 1
+					nodrot = 1
 				elseif cubexr < -math.abs(cubeyr)
 				and cubexr < -math.abs(cubezr) then
-					treedir = 2
+					nodrot = 2
 				elseif cubezr > math.abs(cubexr)
 				and cubezr > math.abs(cubeyr) then
-					treedir = 5
+					nodrot = 5
 				elseif cubezr < -math.abs(cubexr)
 				and cubezr < -math.abs(cubeyr) then
-					treedir = 6
+					nodrot = 6
 				end
 			elseif dysoncube then
 				if cubeyr > math.abs(cubexr)
 				and cubeyr > math.abs(cubezr) then
-					treedir = 4
+					nodrot = 4
 				elseif cubeyr < -math.abs(cubexr)
 				and cubeyr < -math.abs(cubezr) then
-					treedir = 3
+					nodrot = 3
 				elseif cubexr > math.abs(cubeyr)
 				and cubexr > math.abs(cubezr) then
-					treedir = 2
+					nodrot = 2
 				elseif cubexr < -math.abs(cubeyr)
 				and cubexr < -math.abs(cubezr) then
-					treedir = 1
+					nodrot = 1
 				elseif cubezr > math.abs(cubexr)
 				and cubezr > math.abs(cubeyr) then
-					treedir = 6
+					nodrot = 6
 				elseif cubezr < -math.abs(cubexr)
 				and cubezr < -math.abs(cubeyr) then
-					treedir = 5
+					nodrot = 5
 				end
+			else
+				nodrot = 3
 			end
 		end
 		-- mapgen
-		local noise6abs = math.abs(noise6) -- rivers
-		if noise6abs <= 0.03 * (1 - (density / 0.25) ^ 2) * altprop
+		local n_faultabs = math.abs(n_fault) -- rivers
+		if n_faultabs <= 0.03 * (1 - (density / 0.25) ^ 2) * altprop
 		and grad <= 0.12 and (density > 0 or grad > 0) then
 			if grad > 0.1 and density > 0 then
 				data[vi] = c_flrsand
@@ -465,15 +479,15 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				if tundra or taiga then		 -- dry river in deserts
 					data[vi] = c_ice
 				else
-					if treedir == 3 then
+					if nodrot == 3 then
 						data[vi] = c_flrwatfour
 					else
 						data[vi] = c_flrwatzero
 					end
 				end
 			end
-		elseif noise6abs > 0.03 * (1 - (density / 0.25) ^ 2) * altprop -- river sand
-		and noise6abs <= 0.04 * (1 - (density / 0.3) ^ 2) * altprop
+		elseif n_faultabs > 0.03 * (1 - (density / 0.25) ^ 2) * altprop -- river sand
+		and n_faultabs <= 0.04 * (1 - (density / 0.3) ^ 2) * altprop
 		and grad < 0.12 and density >= 0.1 then
 			data[vi] = c_flrsand
 		elseif (density >= stot and grad <= DEPT and nofis) then -- stone
@@ -502,7 +516,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				data[vi] = c_flrstone
 			end
 		elseif density > 0 and density < stot then -- fine materials
-			if grad >= -0.04 + noise8 * 0.08 + math.random() * 0.02 then -- beaches
+			if grad >= -0.04 + n_terblen * 0.08 then -- beaches
 				if taiga and density < DIRT and grad <= 0 then -- snowy beach
 					data[vi] = c_snowblock
 				elseif deforest and grad > 0.05 and grad < 0.057 then -- clay
@@ -528,32 +542,32 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				else -- else surface nodes
 					if taiga then
 						if tree and math.random(flora.PTCHA) == 2 then
-							flexrealm_pinetree(x, y, z, treedir, area, data)
+							flexrealm_pinetree(x, y, z, nodrot, area, data)
 						else
 							data[vi] = c_snowblock
 						end
 					elseif deforest then
 						data[vi] = c_flrgrass
 						if tree and math.random(flora.ATCHA) == 2 then
-							flexrealm_appletree(x, y, z, treedir, area, data)
+							flexrealm_appletree(x, y, z, nodrot, area, data)
 						elseif tree and grad <= 0
 						and math.random(flora.DEFCHA) == 2 then
-							flexrealm_flower(x, y, z, treedir, area, data)
+							flexrealm_flower(x, y, z, nodrot, area, data)
 						elseif tree and grad <= 0
 						and math.random(flora.DEGCHA) == 2 then
-							flexrealm_grass(x, y, z, treedir, area, data)
+							flexrealm_grass(x, y, z, nodrot, area, data)
 						end
 					elseif savanna then
 						data[vi] = c_flrdrygrass
 						if tree and math.random(flora.STCHA) == 2 then
-							flexrealm_savannatree(x, y, z, treedir, area, data)
+							flexrealm_savannatree(x, y, z, nodrot, area, data)
 						elseif tree and grad <= 0
 						and math.random(flora.SAGCHA) == 2 then
-							flexrealm_dryshrub(x, y, z, treedir, area, data)
+							flexrealm_dryshrub(x, y, z, nodrot, area, data)
 						end
 					elseif raforest then
 						if tree and math.random(flora.JTCHA) == 2 then
-							flexrealm_jungletree(x, y, z, treedir, area, data)
+							flexrealm_jungletree(x, y, z, nodrot, area, data)
 						else
 							data[vi] = c_flrgrass
 						end
@@ -561,16 +575,16 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						data[vi] = c_flrdrygrass
 						if tree and grad <= 0
 						and math.random(flora.DRGCHA) == 2 then
-							flexrealm_dryshrub(x, y, z, treedir, area, data)
+							flexrealm_dryshrub(x, y, z, nodrot, area, data)
 						end
 					elseif wetgrass then
 						data[vi] = c_flrgrass
 						if tree and grad <= 0
 						and math.random(flora.WEGCHA) == 2 then
 							if math.random(3) == 2 then
-								flexrealm_grass(x, y, z, treedir, area, data)
+								flexrealm_grass(x, y, z, nodrot, area, data)
 							else
-								flexrealm_jungrass(x, y, z, treedir, area, data)
+								flexrealm_jungrass(x, y, z, nodrot, area, data)
 							end
 						end
 					elseif tundra then
@@ -578,7 +592,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					elseif desert then
 						if tree and humid > LWET - 0.2
 						and math.random(flora.CACHA) == 2 then
-							flexrealm_cactus(x, y, z, treedir, area, data)
+							flexrealm_cactus(x, y, z, nodrot, area, data)
 						else
 							data[vi] = c_flrdesand
 						end
@@ -591,9 +605,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			end
 		elseif grad > 0 and density <= 0 then
 			if nodid == c_air then
-				if noise8 > 0.2 and density > -0.01 + (math.random() - 0.5) * 0.005
+				if n_terblen > 0.2 and density > -0.01 + (math.random() - 0.5) * 0.005
 				and grad < 0.02 and (desert or savanna or raforest) then
-					if treedir == 3 then -- swampwater
+					if nodrot == 3 then -- swampwater
 						data[vi] = c_flrswatfour
 					else
 						data[vi] = c_flrswatzero
@@ -601,21 +615,21 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					if math.random(flora.PAPCHA) == 2 then -- papyrus
 						flexrealm_papyrus(x, y, z, treedir, area, data)
 					end 
-				elseif treedir == 3 then -- water
+				elseif nodrot == 3 then -- water
 					data[vi] = c_flrwatfour
 				else
 					data[vi] = c_flrwatzero
 				end
 			end
 		elseif not nofis and grad > 0 and density > 0 and grad <= DEPT
-		and ((noise6 > -0.45 and noise6 < -0.35) or (noise6 > 0.35 and noise6 < 0.45)) then
+		and ((n_fault > -0.45 and n_fault < -0.35) or (n_fault > 0.35 and n_fault < 0.45)) then
 			data[vi] = c_flrsand -- sand blocking fissures in faults below water level
 		elseif grad >= CLLT and grad <= CLHT then -- clouds
 			local xrq = 16 * math.floor((x - x0) / 16)
 			local yrq = 16 * math.floor((y - y0) / 16)
 			local zrq = 16 * math.floor((z - z0) / 16)
 			local qixyz = zrq * facearea + yrq * sidelen + xrq + 1
-			if nvals_cloud[qixyz] > TCLOUD and grad < -0.895 + nvals9[ni] * 0.005 then
+			if nvals_cloud[qixyz] > TCLOUD and grad < -0.895 + n_humid * 0.005 then
 				data[vi] = c_flrcloud
 			end
 		end
@@ -627,11 +641,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	end
 	
 	vm:set_data(data)
-	vm:set_lighting({day=0, night=0})
 	vm:calc_lighting()
 	vm:write_to_map(data)
 	vm:update_liquids()
 
 	local chugent = math.ceil((os.clock() - t0) * 1000)
-	print ("[flexrealm] "..chugent.." ms")
+	print ("[flexrealm] "..chugent.." ms  minp ("..x0.." "..y0.." "..z0..")")
 end)
