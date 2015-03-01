@@ -1,4 +1,4 @@
-function flexrealm_appletree(x, y, z, nodrot, area, data)
+function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 	local c_tree = minetest.get_content_id("default:tree")
 	local c_apple = minetest.get_content_id("default:apple")
 	local c_leaves = minetest.get_content_id("default:leaves")
@@ -10,14 +10,17 @@ function flexrealm_appletree(x, y, z, nodrot, area, data)
 					local vil = area:index(x + i + 1, y + j, z + k)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-					elseif math.random(2) == 2 then
+						p2data[vil] = nodrot
+					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x + i, y, z)
 			data[vit] = c_tree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 16 then
 		for i = -1, 5 do
@@ -27,14 +30,17 @@ function flexrealm_appletree(x, y, z, nodrot, area, data)
 					local vil = area:index(x - i - 1, y + j, z + k)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-					elseif math.random(2) == 2 then
+						p2data[vil] = nodrot
+					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x - i, y, z)
 			data[vit] = c_tree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 0 then
 		for j = -1, 5 do
@@ -44,14 +50,17 @@ function flexrealm_appletree(x, y, z, nodrot, area, data)
 					local vil = area:index(x + i, y + j + 1, z + k)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-					elseif math.random(2) == 2 then
+						p2data[vil] = nodrot
+					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x, y + j, z)
 			data[vit] = c_tree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 20 then
 		for j = -1, 5 do
@@ -61,14 +70,17 @@ function flexrealm_appletree(x, y, z, nodrot, area, data)
 					local vil = area:index(x + i, y - j - 1, z + k)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-					elseif math.random(2) == 2 then
+						p2data[vil] = nodrot
+					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x, y - j, z)
 			data[vit] = c_tree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 4 then
 		for k = -1, 5 do
@@ -78,14 +90,17 @@ function flexrealm_appletree(x, y, z, nodrot, area, data)
 					local vil = area:index(x + i, y + j, z + k + 1)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-					elseif math.random(2) == 2 then
+						p2data[vil] = nodrot
+					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x, y, z + k)
 			data[vit] = c_tree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 8 then
 		for k = -1, 5 do
@@ -95,558 +110,307 @@ function flexrealm_appletree(x, y, z, nodrot, area, data)
 					local vil = area:index(x + i, y + j, z - k - 1)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-					elseif math.random(2) == 2 then
+						p2data[vil] = nodrot
+					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x, y, z - k)
 			data[vit] = c_tree
+			p2data[vit] = nodrot
 		end
 	end
 end
 
-function flexrealm_pinetree(x, y, z, nodrot, area, data)
-	local c_tree = minetest.get_content_id("default:tree")
-	local c_flrneedles = minetest.get_content_id("flexrealm:needles")
+
+function flexrealm_pinetree(x, y, z, nodrot, area, data, p2data)
+	local c_tree = minetest.get_content_id("default:pinetree")
+	local c_needles = minetest.get_content_id("default:pine_needles")
 	local c_snowblock = minetest.get_content_id("default:snowblock")
-	if nodrot == 12 then
-		for i = -2, 11 do
-		for j = -1, 1 do
-		for k = -1, 1 do
-			local vi = area:index(x + i, y + j, z + k)
-			if i >= 2 and i <= 4 then
-				if j == 0 and k == 0 then
-					data[vi] = c_tree
-				else
-					data[vi] = c_flrneedles
-				end
-			elseif i == 5 then
-				if j == 0 and k == 0 then
-					data[vi] = c_tree
-				elseif j * k == 0 then
-					data[vi] = c_flrneedles
-				else
-					data[vi] = c_snowblock
-				end
-			elseif i >= 6 and i <= 7 then
-				if j == 0 and k == 0 then
-					data[vi] = c_tree
-				elseif j * k == 0 then
-					data[vi] = c_flrneedles
-				end
-			elseif i == 8 then
-				if j == 0 and k == 0 then
-					data[vi] = c_flrneedles
-				elseif j * k == 0 then
-					data[vi] = c_snowblock
-				end
-			elseif j == 0 and k == 0 then
-				if i <= 1 then
-					data[vi] = c_tree
-				elseif i == 11 then
-					data[vi] = c_snowblock
-				else
-					data[vi] = c_flrneedles
-				end
-			end		
-		end
-		end
-		end
-	elseif nodrot == 16 then
-		for i = -2, 11 do
-		for j = -1, 1 do
-		for k = -1, 1 do
-			local vi = area:index(x - i, y + j, z + k)
-			if i >= 2 and i <= 4 then
-				if j == 0 and k == 0 then
-					data[vi] = c_tree
-				else
-					data[vi] = c_flrneedles
-				end
-			elseif i == 5 then
-				if j == 0 and k == 0 then
-					data[vi] = c_tree
-				elseif j * k == 0 then
-					data[vi] = c_flrneedles
-				else
-					data[vi] = c_snowblock
-				end
-			elseif i >= 6 and i <= 7 then
-				if j == 0 and k == 0 then
-					data[vi] = c_tree
-				elseif j * k == 0 then
-					data[vi] = c_flrneedles
-				end
-			elseif i == 8 then
-				if j == 0 and k == 0 then
-					data[vi] = c_flrneedles
-				elseif j * k == 0 then
-					data[vi] = c_snowblock
-				end
-			elseif j == 0 and k == 0 then
-				if i <= 1 then
-					data[vi] = c_tree
-				elseif i == 11 then
-					data[vi] = c_snowblock
-				else
-					data[vi] = c_flrneedles
-				end
-			end		
-		end
-		end
-		end
-	elseif nodrot == 0 then
-		for j = -2, 11 do
-		for i = -1, 1 do
-		for k = -1, 1 do
-			local vi = area:index(x + i, y + j, z + k)
-			if j >= 2 and j <= 4 then
-				if i == 0 and k == 0 then
-					data[vi] = c_tree
-				else
-					data[vi] = c_flrneedles
-				end
-			elseif j == 5 then
-				if i == 0 and k == 0 then
-					data[vi] = c_tree
-				elseif i * k == 0 then
-					data[vi] = c_flrneedles
-				else
-					data[vi] = c_snowblock
-				end
-			elseif j >= 6 and j <= 7 then
-				if i == 0 and k == 0 then
-					data[vi] = c_tree
-				elseif i * k == 0 then
-					data[vi] = c_flrneedles
-				end
-			elseif j == 8 then
-				if i == 0 and k == 0 then
-					data[vi] = c_flrneedles
-				elseif i * k == 0 then
-					data[vi] = c_snowblock
-				end
-			elseif i == 0 and k == 0 then
-				if j <= 1 then
-					data[vi] = c_tree
-				elseif j == 11 then
-					data[vi] = c_snowblock
-				else
-					data[vi] = c_flrneedles
-				end
-			end		
-		end
-		end
-		end
-	elseif nodrot == 20 then
-		for j = -2, 11 do
-		for i = -1, 1 do
-		for k = -1, 1 do
-			local vi = area:index(x + i, y - j, z + k)
-			if j >= 2 and j <= 4 then
-				if i == 0 and k == 0 then
-					data[vi] = c_tree
-				else
-					data[vi] = c_flrneedles
-				end
-			elseif j == 5 then
-				if i == 0 and k == 0 then
-					data[vi] = c_tree
-				elseif i * k == 0 then
-					data[vi] = c_flrneedles
-				else
-					data[vi] = c_snowblock
-				end
-			elseif j >= 6 and j <= 7 then
-				if i == 0 and k == 0 then
-					data[vi] = c_tree
-				elseif i * k == 0 then
-					data[vi] = c_flrneedles
-				end
-			elseif j == 8 then
-				if i == 0 and k == 0 then
-					data[vi] = c_flrneedles
-				elseif i * k == 0 then
-					data[vi] = c_snowblock
-				end
-			elseif i == 0 and k == 0 then
-				if j <= 1 then
-					data[vi] = c_tree
-				elseif j == 11 then
-					data[vi] = c_snowblock
-				else
-					data[vi] = c_flrneedles
-				end
-			end		
-		end
-		end
-		end
-	elseif nodrot == 4 then
-		for k = -2, 11 do
-		for i = -1, 1 do
-		for j = -1, 1 do
-			local vi = area:index(x + i, y + j, z + k)
-			if k >= 2 and k <= 4 then
-				if i == 0 and j == 0 then
-					data[vi] = c_tree
-				else
-					data[vi] = c_flrneedles
-				end
-			elseif k == 5 then
-				if i == 0 and j == 0 then
-					data[vi] = c_tree
-				elseif i * j == 0 then
-					data[vi] = c_flrneedles
-				else
-					data[vi] = c_snowblock
-				end
-			elseif k >= 6 and k <= 7 then
-				if i == 0 and j == 0 then
-					data[vi] = c_tree
-				elseif i * j == 0 then
-					data[vi] = c_flrneedles
-				end
-			elseif k == 8 then
-				if i == 0 and j == 0 then
-					data[vi] = c_flrneedles
-				elseif i * j == 0 then
-					data[vi] = c_snowblock
-				end
-			elseif i == 0 and j == 0 then
-				if k <= 1 then
-					data[vi] = c_tree
-				elseif k == 11 then
-					data[vi] = c_snowblock
-				else
-					data[vi] = c_flrneedles
-				end
-			end		
-		end
-		end
-		end
-	elseif nodrot == 8 then
-		for k = -2, 11 do
-		for i = -1, 1 do
-		for j = -1, 1 do
-			local vi = area:index(x + i, y + j, z - k)
-			if k >= 2 and k <= 4 then
-				if i == 0 and j == 0 then
-					data[vi] = c_tree
-				else
-					data[vi] = c_flrneedles
-				end
-			elseif k == 5 then
-				if i == 0 and j == 0 then
-					data[vi] = c_tree
-				elseif i * j == 0 then
-					data[vi] = c_flrneedles
-				else
-					data[vi] = c_snowblock
-				end
-			elseif k >= 6 and k <= 7 then
-				if i == 0 and j == 0 then
-					data[vi] = c_tree
-				elseif i * j == 0 then
-					data[vi] = c_flrneedles
-				end
-			elseif k == 8 then
-				if i == 0 and j == 0 then
-					data[vi] = c_flrneedles
-				elseif i * j == 0 then
-					data[vi] = c_snowblock
-				end
-			elseif i == 0 and j == 0 then
-				if k <= 1 then
-					data[vi] = c_tree
-				elseif k == 11 then
-					data[vi] = c_snowblock
-				else
-					data[vi] = c_flrneedles
-				end
-			end		
-		end
-		end
-		end
-	end
 end
 
-function flexrealm_jungletree(x, y, z, nodrot, area, data)
+
+function flexrealm_jungletree(x, y, z, nodrot, area, data, p2data)
 	local c_juntree = minetest.get_content_id("default:jungletree")
-	local c_flrjunleaf = minetest.get_content_id("flexrealm:junleaf")
+	local c_junleaf = minetest.get_content_id("default:jungleleaves")
 	if nodrot == 12 then
 		for i = -4, 17 do
-			if i == 11 or i == 17 then
+			if i == 11 or i == 12 or i == 16 or i == 17 then
 				for j = -2, 2 do
 				for k = -2, 2 do
-					local vil = area:index(x + i + math.random(0, 1), y + j, z + k)
+					local vil = area:index(x + i, y + j, z + k)
 					if math.random(4) ~= 2 then
-						data[vil] = c_flrjunleaf
+						data[vil] = c_junleaf
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x + i, y, z)
 			data[vit] = c_juntree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 16 then
 		for i = -4, 17 do
-			if i == 11 or i == 17 then
+			if i == 11 or i == 12 or i == 16 or i == 17 then
 				for j = -2, 2 do
 				for k = -2, 2 do
-					local vil = area:index(x - i - math.random(0, 1), y + j, z + k)
+					local vil = area:index(x - i, y + j, z + k)
 					if math.random(4) ~= 2 then
-						data[vil] = c_flrjunleaf
+						data[vil] = c_junleaf
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x - i, y, z)
 			data[vit] = c_juntree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 0 then
 		for j = -4, 17 do
-			if j == 11 or j == 17 then
+			if j == 11 or j == 12 or j == 16 or j == 17 then
 				for i = -2, 2 do
 				for k = -2, 2 do
-					local vil = area:index(x + i, y + j + math.random(0, 1), z + k)
+					local vil = area:index(x + i, y + j, z + k)
 					if math.random(4) ~= 2 then
-						data[vil] = c_flrjunleaf
+						data[vil] = c_junleaf
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x, y + j, z)
 			data[vit] = c_juntree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 20 then
 		for j = -4, 17 do
-			if j == 3 or j == 17 then
+			if j == 11 or j == 12 or j == 16 or j == 17 then
 				for i = -2, 2 do
 				for k = -2, 2 do
-					local vil = area:index(x + i, y - j - math.random(0, 1), z + k)
+					local vil = area:index(x + i, y - j, z + k)
 					if math.random(4) ~= 2 then
-						data[vil] = c_flrjunleaf
+						data[vil] = c_junleaf
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x, y - j, z)
 			data[vit] = c_juntree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 4 then
 		for k = -4, 17 do
-			if k == 3 or k == 17 then
+			if k == 11 or k == 12 or k == 16 or k == 17 then
 				for i = -2, 2 do
 				for j = -2, 2 do
-					local vil = area:index(x + i, y + j, z + k + math.random(0, 1))
+					local vil = area:index(x + i, y + j, z + k)
 					if math.random(4) ~= 2 then
-						data[vil] = c_flrjunleaf
+						data[vil] = c_junleaf
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x, y, z + k)
 			data[vit] = c_juntree
+			p2data[vit] = nodrot
 		end
 	elseif nodrot == 8 then
 		for k = -4, 17 do
-			if k == 11 or k == 17 then
+			if k == 11 or k == 12 or k == 16 or k == 17 then
 				for i = -2, 2 do
 				for j = -2, 2 do
-					local vil = area:index(x + i, y + j, z - k - math.random(0, 1))
+					local vil = area:index(x + i, y + j, z - k)
 					if math.random(4) ~= 2 then
-						data[vil] = c_flrjunleaf
+						data[vil] = c_junleaf
+						p2data[vil] = nodrot
 					end
 				end
 				end
 			end
 			local vit = area:index(x, y, z - k)
 			data[vit] = c_juntree
+			p2data[vit] = nodrot
 		end
 	end
 end
 
 
-function flexrealm_randgrass(data, via)
-		local c_grass1 = minetest.get_content_id("default:grass_1")
-		local c_grass2 = minetest.get_content_id("default:grass_2")
-		local c_grass3 = minetest.get_content_id("default:grass_3")
-		local c_grass4 = minetest.get_content_id("default:grass_4")
-		local c_grass5 = minetest.get_content_id("default:grass_5")
-		local rand = math.random(5)
-		if rand == 1 then
-			data[via] = c_grass1
-		elseif rand == 2 then
-			data[via] = c_grass2
-		elseif rand == 3 then
-			data[via] = c_grass3
-		elseif rand == 4 then
-			data[via] = c_grass4
-		else
-			data[via] = c_grass5
-		end
-end
-
-function flexrealm_grass(x, y, z, nodrot, area, data)
+function flexrealm_grass(x, y, z, nodrot, area, data, p2data)
+	local c_grass1 = minetest.get_content_id("default:grass_1")
+	local c_grass2 = minetest.get_content_id("default:grass_2")
+	local c_grass3 = minetest.get_content_id("default:grass_3")
+	local c_grass4 = minetest.get_content_id("default:grass_4")
+	local c_grass5 = minetest.get_content_id("default:grass_5")
+	local via
 	if nodrot == 12 then
-		local via = area:index(x + 1, y, z)
-		flexrealm_randgrass(data, via)
+		via = area:index(x + 1, y, z)
 	elseif nodrot == 16 then
-		local via = area:index(x - 1 , y, z)
-		flexrealm_randgrass(data, via)
+		via = area:index(x - 1 , y, z)
 	elseif nodrot == 0 then	
-		local via = area:index(x, y + 1, z)
-		flexrealm_randgrass(data, via)
+		via = area:index(x, y + 1, z)
 	elseif nodrot == 20 then
-		local via = area:index(x, y - 1, z)
-		flexrealm_randgrass(data, via)
+		via = area:index(x, y - 1, z)
 	elseif nodrot == 4 then
-		local via = area:index(x, y, z + 1)
-		flexrealm_randgrass(data, via)
+		via = area:index(x, y, z + 1)
 	elseif nodrot == 8 then
-		local via = area:index(x, y, z - 1)
-		flexrealm_randgrass(data, via)
+		via = area:index(x, y, z - 1)
 	end
+	local rand = math.random(5)
+	if rand == 1 then
+		data[via] = c_grass1
+	elseif rand == 2 then
+		data[via] = c_grass2
+	elseif rand == 3 then
+		data[via] = c_grass3
+	elseif rand == 4 then
+		data[via] = c_grass4
+	else
+		data[via] = c_grass5
+	end
+	p2data[via] = nodrot
 end
 
 
-function flexrealm_dryshrub(x, y, z, nodrot, area, data)
+function flexrealm_dryshrub(x, y, z, nodrot, area, data, p2data)
 	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
+	local via
 	if nodrot == 12 then
-		local via = area:index(x + 1, y, z)
-		data[via] = c_dryshrub
+		via = area:index(x + 1, y, z)
 	elseif nodrot == 16 then
-		local via = area:index(x - 1, y, z)
-		data[via] = c_dryshrub
+		via = area:index(x - 1, y, z)
 	elseif nodrot == 0 then	
-		local via = area:index(x , y + 1, z)
-		data[via] = c_dryshrub
+		via = area:index(x , y + 1, z)
 	elseif nodrot == 20 then
-		local via = area:index(x , y - 1, z)
-		data[via] = c_dryshrub
+		via = area:index(x , y - 1, z)
 	elseif nodrot == 4 then
-		local via = area:index(x , y , z + 1)
-		data[via] = c_dryshrub
+		via = area:index(x , y , z + 1)
 	elseif nodrot == 8 then
-		local via = area:index(x , y , z - 1)
-		data[via] = c_dryshrub
+		via = area:index(x , y , z - 1)
 	end
+	data[via] = c_dryshrub
+	p2data[via] = nodrot
 end
 
-function flexrealm_jungrass(x, y, z, nodrot, area, data)
+
+function flexrealm_jungrass(x, y, z, nodrot, area, data, p2data)
 	local c_jungrass = minetest.get_content_id("default:junglegrass")
+	local via
 	if nodrot == 12 then
-		local via = area:index(x + 1, y, z)
-		data[via] = c_jungrass
+		via = area:index(x + 1, y, z)
 	elseif nodrot == 16 then
-		local via = area:index(x - 1, y, z)
-		data[via] = c_jungrass
+		via = area:index(x - 1, y, z)
 	elseif nodrot == 0 then	
-		local via = area:index(x , y + 1, z)
-		data[via] = c_jungrass
+		via = area:index(x , y + 1, z)
 	elseif nodrot == 20 then
-		local via = area:index(x , y - 1, z)
-		data[via] = c_jungrass
+		via = area:index(x , y - 1, z)
 	elseif nodrot == 4 then
-		local via = area:index(x , y , z + 1)
-		data[via] = c_jungrass
+		via = area:index(x , y , z + 1)
 	elseif nodrot == 8 then
-		local via = area:index(x , y , z - 1)
-		data[via] = c_jungrass
+		via = area:index(x , y , z - 1)
 	end
+	data[via] = c_jungrass
+	p2data[via] = nodrot
 end
 
-function flexrealm_papyrus(x, y, z, nodrot, area, data)
-	local c_flrpapyrus = minetest.get_content_id("flexrealm:papyrus")
-	local ph = math.random(1, 4)
+
+function flexrealm_papyrus(x, y, z, nodrot, area, data, p2data)
+	local c_papyrus = minetest.get_content_id("flexrealm:papyrus")
+	local ph = math.random(2, 5)
 	if nodrot == 12 then
 		for i = 1, ph do
 			local vip = area:index(x + i, y, z)
-			data[vip] = c_flrpapyrus
+			data[vip] = c_papyrus
+			p2data[vip] = nodrot
 		end
 	elseif nodrot == 16 then
 		for i = 1, ph do
 			local vip = area:index(x - i, y, z)
-			data[vip] = c_flrpapyrus
+			data[vip] = c_papyrus
+			p2data[vip] = nodrot
 		end
 	elseif nodrot == 0 then
 		for j = 1, ph do
 			local vip = area:index(x, y + j, z)
-			data[vip] = c_flrpapyrus
+			data[vip] = c_papyrus
+			p2data[vip] = nodrot
 		end
 	elseif nodrot == 20 then
 		for j = 1, ph do
 			local vip = area:index(x, y - j, z)
-			data[vip] = c_flrpapyrus
+			data[vip] = c_papyrus
+			p2data[vip] = nodrot
 		end
 	elseif nodrot == 4 then
 		for k = 1, ph do
 			local vip = area:index(x, y, z + k)
-			data[vip] = c_flrpapyrus
+			data[vip] = c_papyrus
+			p2data[vip] = nodrot
 		end
 	elseif nodrot == 8 then
 		for k = 1, ph do
 			local vip = area:index(x, y, z - k)
-			data[vip] = c_flrpapyrus
+			data[vip] = c_papyrus
+			p2data[vip] = nodrot
 		end
 	end
 end
 
-function flexrealm_randflower(data, via)
-		local c_danwhi = minetest.get_content_id("flowers:dandelion_white")
-		local c_danyel = minetest.get_content_id("flowers:dandelion_yellow")
-		local c_rose = minetest.get_content_id("flowers:rose")
-		local c_tulip = minetest.get_content_id("flowers:tulip")
-		local c_geranium = minetest.get_content_id("flowers:geranium")
-		local c_viola = minetest.get_content_id("flowers:viola")
-		local rand = math.random(6)
-		if rand == 1 then
-			data[via] = c_danwhi
-		elseif rand == 2 then
-			data[via] = c_rose
-		elseif rand == 3 then
-			data[via] = c_tulip
-		elseif rand == 4 then
-			data[via] = c_danyel
-		elseif rand == 5 then
-			data[via] = c_geranium
-		else
-			data[via] = c_viola
-		end
-end
 
-function flexrealm_flower(x, y, z, nodrot, area, data)
+function flexrealm_flower(x, y, z, nodrot, area, data, p2data)
+	local c_danwhi = minetest.get_content_id("flowers:dandelion_white")
+	local c_danyel = minetest.get_content_id("flowers:dandelion_yellow")
+	local c_rose = minetest.get_content_id("flowers:rose")
+	local c_tulip = minetest.get_content_id("flowers:tulip")
+	local c_geranium = minetest.get_content_id("flowers:geranium")
+	local c_viola = minetest.get_content_id("flowers:viola")
+	local via
 	if nodrot == 12 then
-		local via = area:index(x + 1, y, z)
-		flexrealm_randflower(data, via)
+		via = area:index(x + 1, y, z)
 	elseif nodrot == 16 then
-		local via = area:index(x - 1, y, z)
-		flexrealm_randflower(data, via)
+		via = area:index(x - 1, y, z)
 	elseif nodrot == 0 then	
-		local via = area:index(x , y + 1, z)
-		flexrealm_randflower(data, via)
+		via = area:index(x , y + 1, z)
 	elseif nodrot == 20 then
-		local via = area:index(x , y - 1, z)
-		flexrealm_randflower(data, via)
+		via = area:index(x , y - 1, z)
 	elseif nodrot == 4 then
-		local via = area:index(x , y , z + 1)
-		flexrealm_randflower(data, via)
+		via = area:index(x , y , z + 1)
 	elseif nodrot == 8 then
-		local via = area:index(x , y , z - 1)
-		flexrealm_randflower(data, via)
+		via = area:index(x , y , z - 1)
 	end
+	local rand = math.random(6)
+	if rand == 1 then
+		data[via] = c_danwhi
+	elseif rand == 2 then
+		data[via] = c_rose
+	elseif rand == 3 then
+		data[via] = c_tulip
+	elseif rand == 4 then
+		data[via] = c_danyel
+	elseif rand == 5 then
+		data[via] = c_geranium
+	else
+		data[via] = c_viola
+	end
+	p2data[via] = nodrot
 end
 
-function flexrealm_cactus(x, y, z, nodrot, area, data)
-	local c_flrcactus = minetest.get_content_id("flexrealm:cactus")
+
+function flexrealm_cactus(x, y, z, nodrot, area, data, p2data)
+	local c_cactus = minetest.get_content_id("flexrealm:cactus")
 	if nodrot == 12 then
 		for i = -1, 5 do
 		for j = -2, 2 do
 			if j == 0 or i == 3 or (i == 4 and math.abs(j) == 2) then
 				local vic = area:index(x + i, y + j, z)
-				data[vic] = c_flrcactus
+				data[vic] = c_cactus
+				p2data[vic] = nodrot
 			end
 		end
 		end
@@ -655,7 +419,8 @@ function flexrealm_cactus(x, y, z, nodrot, area, data)
 		for j = -2, 2 do
 			if j == 0 or i == 3 or (i == 4 and math.abs(j) == 2) then
 				local vic = area:index(x - i, y + j, z)
-				data[vic] = c_flrcactus
+				data[vic] = c_cactus
+				p2data[vic] = nodrot
 			end
 		end
 		end
@@ -664,7 +429,8 @@ function flexrealm_cactus(x, y, z, nodrot, area, data)
 		for i = -2, 2 do
 			if i == 0 or j == 3 or (j == 4 and math.abs(i) == 2) then
 				local vic = area:index(x + i, y + j, z)
-				data[vic] = c_flrcactus
+				data[vic] = c_cactus
+				p2data[vic] = nodrot
 			end
 		end
 		end
@@ -673,7 +439,8 @@ function flexrealm_cactus(x, y, z, nodrot, area, data)
 		for i = -2, 2 do
 			if i == 0 or j == 3 or (j == 4 and math.abs(i) == 2) then
 				local vic = area:index(x + i, y - j, z)
-				data[vic] = c_flrcactus
+				data[vic] = c_cactus
+				p2data[vic] = nodrot
 			end
 		end
 		end
@@ -682,7 +449,8 @@ function flexrealm_cactus(x, y, z, nodrot, area, data)
 		for i = -2, 2 do
 			if i == 0 or k == 3 or (k == 4 and math.abs(i) == 2) then
 				local vic = area:index(x + i, y, z + k)
-				data[vic] = c_flrcactus
+				data[vic] = c_cactus
+				p2data[vic] = nodrot
 			end
 		end
 		end
@@ -691,7 +459,8 @@ function flexrealm_cactus(x, y, z, nodrot, area, data)
 		for i = -2, 2 do
 			if i == 0 or k == 3 or (k == 4 and math.abs(i) == 2) then
 				local vic = area:index(x + i, y, z - k)
-				data[vic] = c_flrcactus
+				data[vic] = c_cactus
+				p2data[vic] = nodrot
 			end
 		end
 		end

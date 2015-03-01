@@ -1,4 +1,4 @@
--- flexrealm 0.4.1
+-- flexrealm 0.4.2
 
 -- Variables
 
@@ -7,8 +7,8 @@ local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
 local planet = false -- Planet sphere
 local dysonsphere = false -- Dyson sphere
-local tube = false -- East-West tube world / O'Neill space colony
-local cube = true -- Planet cube
+local tube = true -- East-West tube world / O'Neill space colony
+local cube = false -- Planet cube
 local dysoncube = false -- Dyson cube
 
 local limit = {
@@ -29,18 +29,18 @@ local VERTZ = 0 -- Surface z
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
 local SPHEY = 0 -- ..y 
-local SPHER = 256 -- Surface radius
+local SPHER = 512 -- Surface radius
 -- Tube realm
 local CYLZ = 0 -- Axis z
 local CYLY = 0 -- ..y
-local CYLR = 256 -- Surface radius
+local CYLR = 512 -- Surface radius
 local CYLEX = 4000 -- Endcap base +-x
-local CYLEW = 256 -- Endcap dish depth
+local CYLEW = 512 -- Endcap dish depth
 -- Cube and dyson cube realm
 local CUBEX = 0 -- Centre x
 local CUBEZ = 0 -- ..z
 local CUBEY = 0 -- ..y 
-local CUBER = 256 -- Surface radius
+local CUBER = 512 -- Surface radius
 
 -- Noise thresholds for density gradient 'grad'
 local DEPT = 2 -- Realm +-depth density threshold
@@ -63,10 +63,11 @@ local HUT = 0 --  -- Humidity noise threshold
 
 local flora = {
 	APPCHA = 49, -- Apple tree maximum 1/x chance per surface node
-	PINCHA = 49, -- Pine tree maximum 1/x chance per surface node
-	JUTCHA = 16, -- Jungle tree maximum 1/x chance per surface node
 	FLOCHA = 47 ^ 2, -- Flower 1/x chance per surface node
 	GRACHA = 9, -- Grass 1/x chance per surface node
+	PINCHA = 49, -- Pine tree maximum 1/x chance per surface node
+	JUTCHA = 16, -- Jungle tree maximum 1/x chance per surface node
+	JUGCHA = 16, -- Jungle tree maximum 1/x chance per surface node
 	PAPCHA = 3, -- Papyrus 1/x chance per surface swamp water node
 	CACCHA = 361, -- Cactus 1/x chance per surface node
 }
@@ -122,7 +123,7 @@ local np_fault = {
 local np_temp = {
 	offset = 0,
 	scale = 1,
-	spread = {x=512, y=512, z=512},
+	spread = {x=256, y=256, z=256},
 	seed = 9130,
 	octaves = 3,
 	persist = 0.4
@@ -133,7 +134,7 @@ local np_temp = {
 local np_humid = {
 	offset = 0,
 	scale = 1,
-	spread = {x=512, y=512, z=512},
+	spread = {x=256, y=256, z=256},
 	seed = -55500,
 	octaves = 3,
 	persist = 0.4
@@ -232,6 +233,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local vm, emin, emax = minetest.get_mapgen_object("voxelmanip")
 	local area = VoxelArea:new{MinEdge=emin, MaxEdge=emax}
 	local data = vm:get_data()
+	local p2data = vm:get_param2_data()
 
 	local sidelen = x1 - x0 + 1
 	local facearea = sidelen ^ 2
@@ -362,7 +364,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			if flat then
 				nodrot = 0
 			elseif vertical then
-				nodrot = 4
+				nodrot = 8
 			elseif invert then
 				nodrot = 20
 			elseif dysonsphere then
@@ -502,7 +504,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				else -- else surface nodes
 					if taiga then
 						if tree and math.random(flora.PINCHA) == 2 then
-							flexrealm_pinetree(x, y, z, nodrot, area, data)
+							flexrealm_pinetree(x, y, z, nodrot, area, data, p2data)
 						else
 							data[vi] = c_snowblock
 						end
@@ -511,30 +513,31 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					elseif forest then
 						data[vi] = c_flrgrass
 						if tree and math.random(flora.APPCHA) == 2 then
-							flexrealm_appletree(x, y, z, nodrot, area, data)
+							flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 						elseif tree and grad <= 0
 						and math.random(flora.FLOCHA) == 2 then
-							flexrealm_flower(x, y, z, nodrot, area, data)
+							flexrealm_flower(x, y, z, nodrot, area, data, p2data)
 						elseif tree and grad <= 0
 						and math.random(flora.GRACHA) == 2 then
-							flexrealm_grass(x, y, z, nodrot, area, data)
+							flexrealm_grass(x, y, z, nodrot, area, data, p2data)
 						end
 					elseif grassland then
 						data[vi] = c_flrgrass
 						if tree and grad <= 0
 						and math.random(flora.GRACHA) == 2 then
-							flexrealm_grass(x, y, z, nodrot, area, data)
+							flexrealm_grass(x, y, z, nodrot, area, data, p2data)
 						end
 					elseif rainforest then
+						data[vi] = c_flrgrass
 						if tree and math.random(flora.JUTCHA) == 2 then
-							flexrealm_jungletree(x, y, z, nodrot, area, data)
-						else
-							data[vi] = c_flrgrass
+							flexrealm_jungletree(x, y, z, nodrot, area, data, p2data)
+						elseif tree and grad <= 0
+						and math.random(flora.JUGCHA) == 2 then
+							flexrealm_jungrass(x, y, z, nodrot, area, data, p2data)
 						end
 					elseif desert then
-						if tree and humid > HUT - 0.2
-						and math.random(flora.CACCHA) == 2 then
-							flexrealm_cactus(x, y, z, nodrot, area, data)
+						if tree and math.random(flora.CACCHA) == 2 then
+							flexrealm_cactus(x, y, z, nodrot, area, data, p2data)
 						else
 							data[vi] = c_flrdesand
 						end
@@ -551,7 +554,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				and grad < 0.02 and (desert or rainforest) then
 					data[vi] = c_flrswatzero -- swampwater
 					if math.random(flora.PAPCHA) == 2 then -- papyrus
-						flexrealm_papyrus(x, y, z, nodrot, area, data)
+						flexrealm_papyrus(x, y, z, nodrot, area, data, p2data)
 					end
 				else
 					data[vi] = c_flrwatzero -- water
@@ -577,6 +580,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	end
 	
 	vm:set_data(data)
+	vm:set_param2_data(p2data)
 	vm:calc_lighting()
 	vm:write_to_map(data)
 	vm:update_liquids()
