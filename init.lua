@@ -1,4 +1,4 @@
--- flexrealm 0.4.2
+-- flexrealm 0.4.3
 
 -- Variables
 
@@ -31,11 +31,11 @@ local SPHEZ = 0 -- ..z
 local SPHEY = 0 -- ..y 
 local SPHER = 512 -- Surface radius
 -- Tube realm
-local CYLZ = 0 -- Axis z
-local CYLY = 0 -- ..y
-local CYLR = 512 -- Surface radius
-local CYLEX = 4000 -- Endcap base +-x
-local CYLEW = 512 -- Endcap dish depth
+local TUBEZ = 0 -- Axis z
+local TUBEY = 0 -- ..y
+local TUBER = 512 -- Surface radius
+local TUBEX = 4000 -- Endcap base +-x
+local TUBED = 512 -- Endcap dish depth
 -- Cube and dyson cube realm
 local CUBEX = 0 -- Centre x
 local CUBEZ = 0 -- ..z
@@ -48,9 +48,10 @@ local ROCK = -1 -- Rocky terrain density threshold
 local CLOLOT = -0.9 -- Cloud low density threshold
 local CLOHIT = -0.89 -- Cloud high density threshold
 -- Noise thresholds for density field 'density'
-local STOT = 0.10 -- Stone density threshold at sea level
-local DIRT = 0.05 -- Dirt density threshold
-local TRET = 0.01 -- Tree growth density threshold
+local TSAND = -0.04 -- Sand density threshold
+local TSTONE = 0.09 -- Stone density threshold at sea level
+local TDIRT = 0.03 -- Dirt density threshold
+local TSURF = 0.02 -- Surface density threshold for flora generation
 
 -- Other parameters
 local TFIS = 0.02 -- Fissure width nose threshold
@@ -259,23 +260,23 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_cloud   = nobj_cloud:get3dMap_flat(minpos)
 
 	local ni = 1
-	local nodrot = 20 -- set to upside down to place non-flowing water before nodrot
-	for z = z0, z1 do			-- is recalculated for node at ni = 6482
+	for z = z0, z1 do
 	for y = y0, y1 do
 	local vi = area:index(x0, y, z)
 	for x = x0, x1 do
 		local nodid = data[vi]
-		local density, terno, grad, cubexr, cubeyr, cubezr
 		-- terrain blend
 		local n_fault = nvals_fault[ni]
 		local n_terblen = nvals_terblen[ni]
 		local terblen = math.min(math.abs(n_terblen) * 2, 1)
+		local terno
 		if n_fault >= -0.4 and n_fault <= 0.4 then
 			terno = nvals_terrain[ni] * (1 - terblen) + nvals_smooth[ni] * terblen
 		else
 			terno = nvals_terrain[ni] * (1 - terblen) - nvals_smooth[ni] * terblen
 		end
 		-- noise gradient
+		local grad, sphexr, spheyr, sphezr, tubeyr, tubezr, cubexr, cubeyr, cubezr
 		if flat then
 			grad = (FLATY - y) / TERRS
 		elseif vertical then
@@ -283,16 +284,20 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		elseif invert then
 			grad = (y - FLATY) / TERRS
 		elseif dysonsphere or planet then
-			local nodrad =
-			math.sqrt((x - SPHEX) ^ 2 + (y - SPHEY) ^ 2 + (z - SPHEZ) ^ 2)
+			sphexr = x - SPHEX
+			spheyr = y - SPHEY
+			sphezr = z - SPHEZ
+			local nodrad = math.sqrt(sphexr ^ 2 + spheyr ^ 2 + sphezr ^ 2)
 			if dysonsphere then
 				grad = (nodrad - SPHER) / TERRS
 			else
 				grad = (SPHER - nodrad) / TERRS
 			end
 		elseif tube then
-			local nodrad = math.sqrt((y - CYLY) ^ 2 + (z - CYLZ) ^ 2)
-			grad = (nodrad - CYLR) / TERRS
+			tubeyr = y - TUBEY
+			tubezr = z - TUBEZ
+			local nodrad = math.sqrt(tubeyr ^ 2 + tubezr ^ 2)
+			grad = (nodrad - TUBER) / TERRS
 		elseif cube or dysoncube then
 			cubexr = x - CUBEX
 			cubeyr = y - CUBEY
@@ -305,9 +310,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			end
 		end
 		-- density field
+		local density
 		if tube then
-			if math.abs(x) > CYLEX then -- endcaps
-				local wall = ((math.abs(x) - CYLEX) / CYLEW) ^ 2 * CYLR / TERRS
+			if math.abs(x) > TUBEX then -- endcaps
+				local wall = ((math.abs(x) - TUBEX) / TUBED) ^ 2 * TUBER / TERRS
 				density = terno + grad + wall
 			else
 				density = terno + grad
@@ -316,10 +322,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			density = terno + grad
 		end
 		-- thin fine materials with altitude
-		local stot = STOT * (1 - grad / ROCK)
+		local stot = TSTONE * (1 - grad / ROCK)
 		local altprop = math.max(1 + grad, 0)
 		-- get biome
-		local n_humid = nvals_humid[ni]
 		local desert = false -- desert biome
 		local rainforest = false -- rainforest biome
 		local grassland = false -- grassland biome
@@ -327,6 +332,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		local tundra = false -- tundra biome
 		local taiga = false -- taiga forest biome
 		local temp = nvals_temp[ni] + grad
+		local n_humid = nvals_humid[ni]
 		local humid = n_humid + grad
 		if density > 0 or grad > 0 then -- if terrain or water calculate biome
 			if temp > HITET then
@@ -349,61 +355,72 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		end
 		-- caves boolean
 		local nofis = math.abs(nvals_fissure[ni]) > TFIS
-		-- if surface node away from chunk boundary get up direction for trees
-		local tree = false
-		if density <= TRET -- surface node
+		-- if surface node away from chunk boundary get up direction for flora
+		local surf = false
+		if density <= TSURF -- surface node
 		and x > x0 and x < x1
 		and y > y0 and y < y1
 		and z > z0 and z < z1 then
-			tree = true
+			surf = true
 		end
 		-- nodrot 0 = y+, 4 = z+, 8 = z-, 12 = x+, 16 = x-, 20 = y-
-		if tree or ni == facearea + sidelen + 2 then -- set nodrot at first non-border
-			local sphedis = SPHER * 0.707 		-- node for water selection
-			local cyldis = CYLR * 0.707 
+		local nodrot
+		if surf then
 			if flat then
 				nodrot = 0
 			elseif vertical then
 				nodrot = 8
 			elseif invert then
 				nodrot = 20
-			elseif dysonsphere then
-				if SPHEY - y > sphedis then
+			elseif planet then
+				if spheyr > math.abs(sphexr)
+				and spheyr > math.abs(sphezr) then
 					nodrot = 0
-				elseif y - SPHEY > sphedis then
+				elseif spheyr < -math.abs(sphexr)
+				and spheyr < -math.abs(sphezr) then
 					nodrot = 20
-				elseif SPHEX - x > sphedis then
+				elseif sphexr > math.abs(spheyr)
+				and sphexr > math.abs(sphezr) then
 					nodrot = 12
-				elseif x - SPHEX > sphedis then
+				elseif sphexr < -math.abs(spheyr)
+				and sphexr < -math.abs(sphezr) then
 					nodrot = 16
-				elseif SPHEZ - z  > sphedis then
+				elseif sphezr > math.abs(sphexr)
+				and sphezr > math.abs(spheyr) then
 					nodrot = 4
-				else
+				elseif sphezr < -math.abs(sphexr)
+				and sphezr < -math.abs(spheyr) then
 					nodrot = 8
 				end
-			elseif planet then
-				if y - SPHEY > sphedis then
-					nodrot = 0
-				elseif SPHEY - y > sphedis then
+			elseif dysonsphere then
+				if spheyr > math.abs(sphexr)
+				and spheyr > math.abs(sphezr) then
 					nodrot = 20
-				elseif x - SPHEX > sphedis then
-					nodrot = 12
-				elseif SPHEX - x > sphedis then
+				elseif spheyr < -math.abs(sphexr)
+				and spheyr < -math.abs(sphezr) then
+					nodrot = 0
+				elseif sphexr > math.abs(spheyr)
+				and sphexr > math.abs(sphezr) then
 					nodrot = 16
-				elseif z - SPHEZ > sphedis then
-					nodrot = 4
-				else
+				elseif sphexr < -math.abs(spheyr)
+				and sphexr < -math.abs(sphezr) then
+					nodrot = 12
+				elseif sphezr > math.abs(sphexr)
+				and sphezr > math.abs(spheyr) then
 					nodrot = 8
+				elseif sphezr < -math.abs(sphexr)
+				and sphezr < -math.abs(spheyr) then
+					nodrot = 4
 				end
 			elseif tube then
-				if CYLY - y > cyldis then
-					nodrot = 0
-				elseif y - CYLY > cyldis then
+				if tubeyr > math.abs(tubezr) then
 					nodrot = 20
-				elseif CYLZ - z > cyldis then
-					nodrot = 4
-				else
+				elseif tubeyr < -math.abs(tubezr) then
+					nodrot = 0
+				elseif tubezr > math.abs(tubeyr) then
 					nodrot = 8
+				elseif tubezr < -math.abs(tubeyr) then
+					nodrot = 4
 				end
 			elseif cube then
 				if cubeyr > math.abs(cubexr)
@@ -490,10 +507,10 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				data[vi] = c_flrstone
 			end
 		elseif density > 0 and density < stot then -- fine materials
-			if grad >= -0.04 + n_terblen * 0.08 then -- beaches
+			if grad >= TSAND then -- beaches
 				data[vi] = c_flrsand -- sand
 			elseif nofis or (not nofis and grad > 0) then -- fine materials cut by
-				if density >= DIRT then		-- fissures above sea level only
+				if density >= TDIRT then		-- fissures above sea level only
 					if desert then
 						data[vi] = c_flrdesand
 					elseif tundra then
@@ -503,7 +520,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					end
 				else -- else surface nodes
 					if taiga then
-						if tree and math.random(flora.PINCHA) == 2 then
+						if surf and math.random(flora.PINCHA) == 2 then
 							flexrealm_pinetree(x, y, z, nodrot, area, data, p2data)
 						else
 							data[vi] = c_snowblock
@@ -512,31 +529,27 @@ minetest.register_on_generated(function(minp, maxp, seed)
 						data[vi] = c_snowblock
 					elseif forest then
 						data[vi] = c_flrgrass
-						if tree and math.random(flora.APPCHA) == 2 then
+						if surf and math.random(flora.APPCHA) == 2 then
 							flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
-						elseif tree and grad <= 0
-						and math.random(flora.FLOCHA) == 2 then
+						elseif surf and math.random(flora.FLOCHA) == 2 then
 							flexrealm_flower(x, y, z, nodrot, area, data, p2data)
-						elseif tree and grad <= 0
-						and math.random(flora.GRACHA) == 2 then
+						elseif surf and math.random(flora.GRACHA) == 2 then
 							flexrealm_grass(x, y, z, nodrot, area, data, p2data)
 						end
 					elseif grassland then
 						data[vi] = c_flrgrass
-						if tree and grad <= 0
-						and math.random(flora.GRACHA) == 2 then
+						if surf and math.random(flora.GRACHA) == 2 then
 							flexrealm_grass(x, y, z, nodrot, area, data, p2data)
 						end
 					elseif rainforest then
 						data[vi] = c_flrgrass
-						if tree and math.random(flora.JUTCHA) == 2 then
+						if surf and math.random(flora.JUTCHA) == 2 then
 							flexrealm_jungletree(x, y, z, nodrot, area, data, p2data)
-						elseif tree and grad <= 0
-						and math.random(flora.JUGCHA) == 2 then
+						elseif surf and math.random(flora.JUGCHA) == 2 then
 							flexrealm_jungrass(x, y, z, nodrot, area, data, p2data)
 						end
 					elseif desert then
-						if tree and math.random(flora.CACCHA) == 2 then
+						if surf and math.random(flora.CACCHA) == 2 then
 							flexrealm_cactus(x, y, z, nodrot, area, data, p2data)
 						else
 							data[vi] = c_flrdesand
