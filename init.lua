@@ -1,4 +1,4 @@
--- flexrealm 0.4.3
+-- flexrealm 0.4.4
 
 -- Variables
 
@@ -20,7 +20,7 @@ local limit = {
 	ZMAX = 33000,
 }
 
-local TERRS = 64 -- Terrain scale for all realms below
+local TERRS = 32 -- Terrain scale for all realms below
 -- Normal and inverted flat realms
 local FLATY = 0 -- Surface y
 -- Vertical flat realm facing south
@@ -29,18 +29,18 @@ local VERTZ = 0 -- Surface z
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
 local SPHEY = 0 -- ..y 
-local SPHER = 512 -- Surface radius
+local SPHER = 128 -- Surface radius
 -- Tube realm
 local TUBEZ = 0 -- Axis z
 local TUBEY = 0 -- ..y
-local TUBER = 512 -- Surface radius
+local TUBER = 128 -- Surface radius
 local TUBEX = 4000 -- Endcap base +-x
-local TUBED = 512 -- Endcap dish depth
+local TUBED = 128 -- Endcap dish depth
 -- Cube and dyson cube realm
 local CUBEX = 0 -- Centre x
 local CUBEZ = 0 -- ..z
 local CUBEY = 0 -- ..y 
-local CUBER = 512 -- Surface radius
+local CUBER = 128 -- Surface radius
 
 -- Noise thresholds for density gradient 'grad'
 local DEPT = 2 -- Realm +-depth density threshold
@@ -49,12 +49,12 @@ local CLOLOT = -0.9 -- Cloud low density threshold
 local CLOHIT = -0.89 -- Cloud high density threshold
 -- Noise thresholds for density field 'density'
 local TSAND = -0.04 -- Sand density threshold
-local TSTONE = 0.09 -- Stone density threshold at sea level
-local TDIRT = 0.03 -- Dirt density threshold
-local TSURF = 0.02 -- Surface density threshold for flora generation
+local TSTONE = 0.1 -- Stone density threshold at sea level
+local TDIRT = 0.05 -- Dirt density threshold
+local TSURF = 0.1 -- Surface density threshold for flora generation
 
 -- Other parameters
-local TFIS = 0.02 -- Fissure width nose threshold
+local TFIS = 0.04 -- Fissure width noise threshold
 local OCHA = 7*7*7 -- Ore 1/x chance per stone node
 local TCLOUD = 0.5 -- Cloud threshold, -2 = overcast, 2 = no cloud
 local HITET = 0.4 -- High temperature noise threshold
@@ -80,9 +80,9 @@ local flora = {
 local np_terrain = {
 	offset = 0,
 	scale = 1,
-	spread = {x=384, y=384, z=384},
+	spread = {x=48, y=48, z=48},
 	seed = 92,
-	octaves = 5,
+	octaves = 2,
 	persist = 0.63
 }
 
@@ -91,9 +91,9 @@ local np_terrain = {
 local np_smooth = {
 	offset = 0,
 	scale = 1,
-	spread = {x=621, y=621, z=621},
+	spread = {x=78, y=78, z=78},
 	seed = 800911,
-	octaves = 4,
+	octaves = 1,
 	persist = 0.4
 }
 
@@ -102,15 +102,15 @@ local np_smooth = {
 local np_terblen = {
 	offset = 0,
 	scale = 1,
-	spread = {x=256, y=256, z=256},
+	spread = {x=64, y=64, z=64},
 	seed = -440002,
 	octaves = 3,
 	persist = 0.4
 }
 
--- 3D noise for faults and rivers
+-- 3D noise for rivers
 
-local np_fault = {
+local np_river = {
 	offset = 0,
 	scale = 1,
 	spread = {x=384, y=384, z=384},
@@ -124,7 +124,7 @@ local np_fault = {
 local np_temp = {
 	offset = 0,
 	scale = 1,
-	spread = {x=256, y=256, z=256},
+	spread = {x=48, y=48, z=48},
 	seed = 9130,
 	octaves = 3,
 	persist = 0.4
@@ -135,7 +135,7 @@ local np_temp = {
 local np_humid = {
 	offset = 0,
 	scale = 1,
-	spread = {x=256, y=256, z=256},
+	spread = {x=48, y=48, z=48},
 	seed = -55500,
 	octaves = 3,
 	persist = 0.4
@@ -146,9 +146,9 @@ local np_humid = {
 local np_fissure = {
 	offset = 0,
 	scale = 1,
-	spread = {x=192, y=192, z=192},
+	spread = {x=48, y=48, z=48},
 	seed = 108881,
-	octaves = 4,
+	octaves = 2,
 	persist = 0.5
 }
 
@@ -172,20 +172,12 @@ minetest.register_on_mapgen_init(function(mgparams)
 	minetest.set_mapgen_params({mgname="singlenode", flags="nolight", water_level=-31000})
 end)
 
-minetest.register_on_joinplayer(function(player)
-	minetest.setting_set("enable_clouds", "false")
-end)
-	
-minetest.register_on_leaveplayer(function(player)
-	minetest.setting_set("enable_clouds", "true")
-end)
-
 -- Initialize noise objects to nil
 
 local nobj_terrain = nil
 local nobj_smooth = nil
 local nobj_terblen = nil
-local nobj_fault = nil
+local nobj_river = nil
 local nobj_fissure = nil
 local nobj_temp = nil
 local nobj_humid = nil
@@ -244,7 +236,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	nobj_terrain = nobj_terrain or minetest.get_perlin_map(np_terrain, chulens)
 	nobj_smooth  = nobj_smooth  or minetest.get_perlin_map(np_smooth, chulens)
 	nobj_terblen = nobj_terblen or minetest.get_perlin_map(np_terblen, chulens)
-	nobj_fault   = nobj_fault   or minetest.get_perlin_map(np_fault, chulens)
+	nobj_river   = nobj_river   or minetest.get_perlin_map(np_river, chulens)
 	nobj_fissure = nobj_fissure or minetest.get_perlin_map(np_fissure, chulens)
 	nobj_temp    = nobj_temp    or minetest.get_perlin_map(np_temp, chulens)
 	nobj_humid   = nobj_humid   or minetest.get_perlin_map(np_humid, chulens)
@@ -253,7 +245,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	local nvals_terrain = nobj_terrain:get3dMap_flat(minpos)
 	local nvals_smooth  = nobj_smooth:get3dMap_flat(minpos)
 	local nvals_terblen = nobj_terblen:get3dMap_flat(minpos)
-	local nvals_fault   = nobj_fault:get3dMap_flat(minpos)
+	local nvals_river   = nobj_river:get3dMap_flat(minpos)
 	local nvals_fissure = nobj_fissure:get3dMap_flat(minpos)
 	local nvals_temp    = nobj_temp:get3dMap_flat(minpos)
 	local nvals_humid   = nobj_humid:get3dMap_flat(minpos)
@@ -266,15 +258,9 @@ minetest.register_on_generated(function(minp, maxp, seed)
 	for x = x0, x1 do
 		local nodid = data[vi]
 		-- terrain blend
-		local n_fault = nvals_fault[ni]
 		local n_terblen = nvals_terblen[ni]
-		local terblen = math.min(math.abs(n_terblen) * 2, 1)
-		local terno
-		if n_fault >= -0.4 and n_fault <= 0.4 then
-			terno = nvals_terrain[ni] * (1 - terblen) + nvals_smooth[ni] * terblen
-		else
-			terno = nvals_terrain[ni] * (1 - terblen) - nvals_smooth[ni] * terblen
-		end
+		local terblen = math.min(math.max(n_terblen + 0.5, 0), 1)
+		local terno = nvals_terrain[ni] * (1 - terblen) + nvals_smooth[ni] * terblen
 		-- noise gradient
 		local grad, sphexr, spheyr, sphezr, tubeyr, tubezr, cubexr, cubeyr, cubezr
 		if flat then
@@ -322,7 +308,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			density = terno + grad
 		end
 		-- thin fine materials with altitude
-		local stot = TSTONE * (1 - grad / ROCK)
+		local tstone = TSTONE * (1 - grad / ROCK)
 		local altprop = math.max(1 + grad, 0)
 		-- get biome
 		local desert = false -- desert biome
@@ -363,8 +349,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 		and z > z0 and z < z1 then
 			surf = true
 		end
-		-- nodrot 0 = y+, 4 = z+, 8 = z-, 12 = x+, 16 = x-, 20 = y-
-		local nodrot
+		-- nodrot 0 = y+, 12 = x+, 16 = x-, 4 = z+, 8 = z-, 20 = y-
+		local nodrot = 0
 		if surf then
 			if flat then
 				nodrot = 0
@@ -465,8 +451,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			end
 		end
 		-- mapgen
-		local n_faultabs = math.abs(n_fault) -- rivers
-		if n_faultabs <= 0.03 * (1 - (density / 0.25) ^ 2) * altprop
+		local n_riverabs = math.abs(nvals_river[ni]) -- river water / glacier
+		if n_riverabs <= 0.03 * (1 - (density / 0.25) ^ 2) * altprop
 		and grad <= 0.12 and (density > 0 or grad > 0) then
 			if grad > 0.1 and density > 0 then
 				data[vi] = c_flrsand
@@ -477,21 +463,21 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					data[vi] = c_flrwatzero
 				end
 			end
-		elseif n_faultabs > 0.03 * (1 - (density / 0.25) ^ 2) * altprop -- river sand
-		and n_faultabs <= 0.04 * (1 - (density / 0.3) ^ 2) * altprop
+		elseif n_riverabs > 0.03 * (1 - (density / 0.25) ^ 2) * altprop -- river sand
+		and n_riverabs <= 0.04 * (1 - (density / 0.3) ^ 2) * altprop
 		and grad < 0.12 and density >= 0.1 then
 			data[vi] = c_flrsand
-		elseif (density >= stot and grad <= DEPT and nofis) then -- stone
+		elseif (density >= tstone and grad <= DEPT and nofis) then -- stone
 			if (density >= 0.5 and density <= 0.55)
 			or (density >= 0.3 and density <= 0.4)
 			or (density >= 0.2 and density <= 0.25) then
 				data[vi] = c_sastone
 			elseif desert then
 				data[vi] = c_flrdestone
-			elseif math.random(OCHA) == 2 and density >= STOT then -- ores
+			elseif math.random(OCHA) == 2 and density >= TSTONE then -- ores
 				local osel = math.random(34)
 				if osel == 34 then
-					data[vi] = c_meseblock -- revenge!
+					data[vi] = c_meseblock
 				elseif osel >= 31 then
 					data[vi] = c_stodiam
 				elseif osel >= 28 then
@@ -506,8 +492,8 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			else
 				data[vi] = c_flrstone
 			end
-		elseif density > 0 and density < stot then -- fine materials
-			if grad >= TSAND then -- beaches
+		elseif density > 0 and density < tstone then -- fine materials
+			if grad >= TSAND then
 				data[vi] = c_flrsand -- sand
 			elseif nofis or (not nofis and grad > 0) then -- fine materials cut by
 				if density >= TDIRT then		-- fissures above sea level only
@@ -557,25 +543,22 @@ minetest.register_on_generated(function(minp, maxp, seed)
 					end
 				end
 			end
-		elseif temp < ICETET and grad > 0 and grad <= 0.05 and density <= 0 then -- ice sheets
+		elseif temp < ICETET and grad > 0 and grad <= 0.05 and density <= 0 then -- sea ice
 			if nodid == c_air then
 				data[vi] = c_ice
 			end
-		elseif grad > 0 and density <= 0 then
+		elseif grad > 0 and density <= 0 then -- sea water / swamp water
 			if nodid == c_air then
 				if n_terblen > 0.2 and density > -0.01 + (math.random() - 0.5) * 0.005
 				and grad < 0.02 and (desert or rainforest) then
-					data[vi] = c_flrswatzero -- swampwater
+					data[vi] = c_flrswatzero
 					if math.random(flora.PAPCHA) == 2 then -- papyrus
 						flexrealm_papyrus(x, y, z, nodrot, area, data, p2data)
 					end
 				else
-					data[vi] = c_flrwatzero -- water
+					data[vi] = c_flrwatzero
 				end
 			end
-		elseif not nofis and grad > 0 and density > 0 and grad <= DEPT
-		and ((n_fault > -0.45 and n_fault < -0.35) or (n_fault > 0.35 and n_fault < 0.45)) then
-			data[vi] = c_flrsand -- sand blocking fissures in faults below water level
 		elseif grad >= CLOLOT and grad <= CLOHIT then -- clouds
 			local xrq = 16 * math.floor((x - x0) / 16)
 			local yrq = 16 * math.floor((y - y0) / 16)
