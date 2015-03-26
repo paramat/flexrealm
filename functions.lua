@@ -1,7 +1,7 @@
 function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 	local c_tree = minetest.get_content_id("default:tree")
-	local c_apple = minetest.get_content_id("default:apple")
-	local c_leaves = minetest.get_content_id("default:leaves")
+	local c_apple = minetest.get_content_id("flexrealm:apple")
+	local c_leaves = minetest.get_content_id("flexrealm:leaves")
 	if nodrot == 12 then
 		for i = -1, 5 do
 			if i >= 3 and i <= 5 then
@@ -128,14 +128,14 @@ end
 
 function flexrealm_pinetree(x, y, z, nodrot, area, data, p2data)
 	local c_tree = minetest.get_content_id("default:pinetree")
-	local c_needles = minetest.get_content_id("default:pine_needles")
+	local c_needles = minetest.get_content_id("flexrealm:pine_needles")
 	local c_snowblock = minetest.get_content_id("default:snowblock")
 end
 
 
 function flexrealm_jungletree(x, y, z, nodrot, area, data, p2data)
 	local c_juntree = minetest.get_content_id("default:jungletree")
-	local c_junleaf = minetest.get_content_id("default:jungleleaves")
+	local c_junleaf = minetest.get_content_id("flexrealm:jungleleaves")
 	if nodrot == 12 then
 		for i = -4, 17 do
 			if i == 11 or i == 12 or i == 16 or i == 17 then
@@ -243,11 +243,11 @@ end
 
 
 function flexrealm_grass(x, y, z, nodrot, area, data, p2data)
-	local c_grass1 = minetest.get_content_id("default:grass_1")
-	local c_grass2 = minetest.get_content_id("default:grass_2")
-	local c_grass3 = minetest.get_content_id("default:grass_3")
-	local c_grass4 = minetest.get_content_id("default:grass_4")
-	local c_grass5 = minetest.get_content_id("default:grass_5")
+	local c_grass1 = minetest.get_content_id("flexrealm:grass_1")
+	local c_grass2 = minetest.get_content_id("flexrealm:grass_2")
+	local c_grass3 = minetest.get_content_id("flexrealm:grass_3")
+	local c_grass4 = minetest.get_content_id("flexrealm:grass_4")
+	local c_grass5 = minetest.get_content_id("flexrealm:grass_5")
 	local via
 	if nodrot == 12 then
 		via = area:index(x + 1, y, z)
@@ -279,7 +279,7 @@ end
 
 
 function flexrealm_dryshrub(x, y, z, nodrot, area, data, p2data)
-	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
+	local c_dryshrub = minetest.get_content_id("flexrealm:dry_shrub")
 	local via
 	if nodrot == 12 then
 		via = area:index(x + 1, y, z)
@@ -300,7 +300,7 @@ end
 
 
 function flexrealm_jungrass(x, y, z, nodrot, area, data, p2data)
-	local c_jungrass = minetest.get_content_id("default:junglegrass")
+	local c_jungrass = minetest.get_content_id("flexrealm:junglegrass")
 	local via
 	if nodrot == 12 then
 		via = area:index(x + 1, y, z)
@@ -364,12 +364,12 @@ end
 
 
 function flexrealm_flower(x, y, z, nodrot, area, data, p2data)
-	local c_danwhi = minetest.get_content_id("flowers:dandelion_white")
-	local c_danyel = minetest.get_content_id("flowers:dandelion_yellow")
-	local c_rose = minetest.get_content_id("flowers:rose")
-	local c_tulip = minetest.get_content_id("flowers:tulip")
-	local c_geranium = minetest.get_content_id("flowers:geranium")
-	local c_viola = minetest.get_content_id("flowers:viola")
+	local c_danwhi = minetest.get_content_id("flexrealm:dandelion_white")
+	local c_danyel = minetest.get_content_id("flexrealm:dandelion_yellow")
+	local c_rose = minetest.get_content_id("flexrealm:rose")
+	local c_tulip = minetest.get_content_id("flexrealm:tulip")
+	local c_geranium = minetest.get_content_id("flexrealm:geranium")
+	local c_viola = minetest.get_content_id("flexrealm:viola")
 	local via
 	if nodrot == 12 then
 		via = area:index(x + 1, y, z)

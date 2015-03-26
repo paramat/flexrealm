@@ -1,38 +1,35 @@
 minetest.register_node("flexrealm:dirt", {
-	description = "FLR Dirt",
+	description = "Flexrealm Dirt",
 	tiles = {"default_dirt.png"},
-	is_ground_content = true,
 	groups = {crumbly=3,soil=1},
-	drop = "default:dirt",
 	sounds = default.node_sound_dirt_defaults(),
 })
 
 minetest.register_node("flexrealm:grass", {
-	description = "FLR Grass",
+	description = "Flexrealm Grass",
 	tiles = {"default_grass.png"},
 	groups = {crumbly=3,soil=1},
-	drop = "default:dirt",
 	sounds = default.node_sound_dirt_defaults({
 		footstep = {name="default_grass_footstep", gain=0.4},
 	}),
 })
 
 minetest.register_node("flexrealm:sand", {
-	description = "FLR Sand",
+	description = "Flexrealm Sand",
 	tiles = {"default_sand.png"},
 	groups = {crumbly=3, sand=1},
 	sounds = default.node_sound_sand_defaults(),
 })
 
 minetest.register_node("flexrealm:desand", {
-	description = "FLR Desert Sand",
+	description = "Flexrealm Desert Sand",
 	tiles = {"default_desert_sand.png"},
 	groups = {crumbly=3, sand=1},
 	sounds = default.node_sound_sand_defaults(),
 })
 
 minetest.register_node("flexrealm:stone", {
-	description = "FLR Stone",
+	description = "Flexrealm Stone",
 	tiles = {"default_stone.png"},
 	groups = {cracky=3, stone=1},
 	drop = "default:cobble",
@@ -40,15 +37,23 @@ minetest.register_node("flexrealm:stone", {
 })
 
 minetest.register_node("flexrealm:destone", {
-	description = "FLR Desert Stone",
+	description = "Flexrealm Desert Stone",
 	tiles = {"default_desert_stone.png"},
 	groups = {cracky=3, stone=1},
 	drop = "default:desert_stone",
 	sounds = default.node_sound_stone_defaults(),
 })
 
+minetest.register_node("flexrealm:perfrost", {
+	description = "Flexrealm Permafrost",
+	tiles = {"flexrealm_perfrost.png"},
+	groups = {crumbly=1},
+	drop = "default:dirt",
+	sounds = default.node_sound_dirt_defaults(),
+})
+
 minetest.register_node("flexrealm:cloud", {
-	description = "FLR Cloud",
+	description = "Flexrealm Cloud",
 	drawtype = "glasslike",
 	tiles = {"flexrealm_cloud.png"},
 	paramtype = "light",
@@ -61,37 +66,48 @@ minetest.register_node("flexrealm:cloud", {
 	groups = {not_in_creative_inventory=1},
 })
 
-minetest.register_node("flexrealm:needles", {
-	description = "FLR Pine Needles",
-	tiles = {"flexrealm_needles.png"},
-	groups = {snappy=3, leafdecay=3},
+-- Rotated nodes
+
+minetest.register_node("flexrealm:leaves", {
+	description = "Flexrealm Leaves",
+	drawtype = "allfaces_optional",
+	waving = 1,
+	visual_scale = 1.3,
+	tiles = {"default_leaves.png"},
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = {snappy=3, flammable=2, leaves=1},
 	sounds = default.node_sound_leaves_defaults(),
 })
 
-minetest.register_node("flexrealm:perfrost", {
-	description = "FLR Permafrost",
-	tiles = {"flexrealm_perfrost.png"},
-	groups = {crumbly=1},
-	drop = "default:dirt",
-	sounds = default.node_sound_dirt_defaults(),
-})
-
-minetest.register_node("flexrealm:junleaf", {
-	description = "FLR Jungletree Leaves",
+minetest.register_node("flexrealm:jungleleaves", {
+	description = "Flexrealm Jungle Leaves",
 	drawtype = "allfaces_optional",
+	waving = 1,
 	visual_scale = 1.3,
 	tiles = {"default_jungleleaves.png"},
 	paramtype = "light",
 	paramtype2 = "facedir",
-	groups = {snappy=3, leafdecay=4, flammable=2, leaves=1},
+	groups = {snappy=3, flammable=2, leaves=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:pine_needles",{
+	description = "Flexrealm Pine Needles",
+	drawtype = "allfaces_optional",
+	visual_scale = 1.3,
+	tiles = {"default_pine_needles.png"},
+	waving = 1,
+	paramtype = "light",
+	paramtype2 = "facedir",
+	groups = {snappy=3, flammable=2, leaves=1},
 	sounds = default.node_sound_leaves_defaults(),
 })
 
 minetest.register_node("flexrealm:cactus", {
-	description = "FLR Cactus",
+	description = "Flexrealm Cactus",
 	tiles = {"default_cactus_top.png", "default_cactus_top.png", "default_cactus_side.png"},
 	paramtype2 = "facedir",
-	is_ground_content = true,
 	groups = {snappy=1,choppy=3,flammable=2},
 	drop = "default:cactus",
 	sounds = default.node_sound_wood_defaults(),
@@ -99,7 +115,7 @@ minetest.register_node("flexrealm:cactus", {
 })
 
 minetest.register_node("flexrealm:papyrus", {
-	description = "FLR Papyrus",
+	description = "Flexrealm Papyrus",
 	drawtype = "plantlike",
 	tiles = {"default_papyrus.png"},
 	inventory_image = "default_papyrus.png",
@@ -107,18 +123,154 @@ minetest.register_node("flexrealm:papyrus", {
 	paramtype = "light",
 	paramtype2 = "facedir",
 	walkable = false,
-	is_ground_content = true,
-	selection_box = {
-		type = "fixed",
-		fixed = {-0.3, -0.5, -0.3, 0.3, 0.5, 0.3}
-	},
 	groups = {snappy=3,flammable=2},
 	drop = "default:papyrus",
 	sounds = default.node_sound_leaves_defaults(),
 })
 
+for i=1,5 do
+	minetest.register_node("flexrealm:grass_"..i, {
+		description = "Flexrealm Grass",
+		drawtype = "plantlike",
+		waving = 1,
+		tiles = {"default_grass_"..i..".png"},
+		inventory_image = "default_grass_"..i..".png",
+		wield_image = "default_grass_"..i..".png",
+		paramtype = "light",
+		paramtype2 = "facedir",
+		walkable = false,
+		buildable_to = true,
+		groups = {snappy=3,flammable=3,flora=1,attached_node=1,not_in_creative_inventory=1},
+		sounds = default.node_sound_leaves_defaults(),
+	})
+end
+
+minetest.register_node("flexrealm:dry_shrub", {
+	description = "Flexrealm Dry Shrub",
+	drawtype = "plantlike",
+	waving = 1,
+	visual_scale = 1.0,
+	tiles = {"default_dry_shrub.png"},
+	inventory_image = "default_dry_shrub.png",
+	wield_image = "default_dry_shrub.png",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	walkable = false,
+	buildable_to = true,
+	groups = {snappy=3,flammable=3,attached_node=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:junglegrass", {
+	description = "Flexrealm Jungle Grass",
+	drawtype = "plantlike",
+	waving = 1,
+	visual_scale = 1.3,
+	tiles = {"default_junglegrass.png"},
+	inventory_image = "default_junglegrass.png",
+	wield_image = "default_junglegrass.png",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	walkable = false,
+	buildable_to = true,
+	groups = {snappy=3,flammable=2,flora=1,attached_node=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:rose", {
+	description = "Flexrealm Rose",
+	drawtype = "plantlike",
+	tiles = { "flowers_rose.png" },
+	inventory_image = "flowers_rose.png",
+	wield_image = "flowers_rose.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	paramtype2 = "facedir",
+	walkable = false,
+	buildable_to = true,
+	groups = {snappy=3,flammable=2,flower=1,flora=1,attached_node=1,color_red=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:tulip", {
+	description = "Flexrealm Tulip",
+	drawtype = "plantlike",
+	tiles = { "flowers_tulip.png" },
+	inventory_image = "flowers_tulip.png",
+	wield_image = "flowers_tulip.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	paramtype2 = "facedir",
+	walkable = false,
+	buildable_to = true,
+	groups = {snappy=3,flammable=2,flower=1,flora=1,attached_node=1,color_orange=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:dandelion_yellow", {
+	description = "Flexrealm Yellow Dandelion",
+	drawtype = "plantlike",
+	tiles = { "flowers_dandelion_yellow.png" },
+	inventory_image = "flowers_dandelion_yellow.png",
+	wield_image = "flowers_dandelion_yellow.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	paramtype2 = "facedir",
+	walkable = false,
+	buildable_to = true,
+	groups = {snappy=3,flammable=2,flower=1,flora=1,attached_node=1,color_yellow=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:geranium", {
+	description = "Flexrealm Blue Geranium",
+	drawtype = "plantlike",
+	tiles = { "flowers_geranium.png" },
+	inventory_image = "flowers_geranium.png",
+	wield_image = "flowers_geranium.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	paramtype2 = "facedir",
+	walkable = false,
+	buildable_to = true,
+	groups = {snappy=3,flammable=2,flower=1,flora=1,attached_node=1,color_blue=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:viola", {
+	description = "Flexrealm Viola",
+	drawtype = "plantlike",
+	tiles = { "flowers_viola.png" },
+	inventory_image = "flowers_viola.png",
+	wield_image = "flowers_viola.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	paramtype2 = "facedir",
+	walkable = false,
+	buildable_to = true,
+	groups = {snappy=3,flammable=2,flower=1,flora=1,attached_node=1,color_violet=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+minetest.register_node("flexrealm:dandelion_white", {
+	description = "Flexrealm White Dandelion",
+	drawtype = "plantlike",
+	tiles = { "flowers_dandelion_white.png" },
+	inventory_image = "flowers_dandelion_white.png",
+	wield_image = "flowers_dandelion_white.png",
+	sunlight_propagates = true,
+	paramtype = "light",
+	paramtype2 = "facedir",
+	walkable = false,
+	buildable_to = true,
+	groups = {snappy=3,flammable=2,flower=1,flora=1,attached_node=1,color_white=1},
+	sounds = default.node_sound_leaves_defaults(),
+})
+
+-- Zero range liquids
+
 minetest.register_node("flexrealm:watzero", {
-	description = "FLR Water Source Range 0",
+	description = "Flexrealm Water Source",
 	inventory_image = minetest.inventorycube("default_water.png"),
 	drawtype = "liquid",
 	tiles = {
@@ -151,7 +303,7 @@ minetest.register_node("flexrealm:watzero", {
 })
 
 minetest.register_node("flexrealm:swatzero", {
-	description = "FLR Swamp Water Source Range 0",
+	description = "Flexrealm Swamp Water Source",
 	inventory_image = minetest.inventorycube("flexrealm_swatzero.png"),
 	tiles = {"flexrealm_swatzero.png"},
 	paramtype = "light",
@@ -170,7 +322,7 @@ minetest.register_node("flexrealm:swatzero", {
 })
 
 minetest.register_node("flexrealm:lavazero", {
-	description = "FLR Lava Source Range 0",
+	description = "Flexrealm Lava Source",
 	inventory_image = minetest.inventorycube("default_lava.png"),
 	drawtype = "liquid",
 	tiles = {
