@@ -1,5 +1,3 @@
--- flexrealm 0.4.4
-
 -- Variables
 
 local flat = false -- Normal flat realm
@@ -7,6 +5,7 @@ local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
 local planet = false -- Planet sphere
 local dysonsphere = false -- Dyson sphere
+local rod = false -- Cylinder world
 local tube = true -- East-West tube world / O'Neill space colony
 local cube = false -- Planet cube
 local dysoncube = false -- Dyson cube
@@ -25,18 +24,18 @@ local TERRS = 32 -- Terrain scale for all realms below
 local FLATY = 0 -- Surface y
 -- Vertical flat realm facing south
 local VERTZ = 0 -- Surface z
--- Dyson sphere and planet sphere
+-- Planet sphere and dyson sphere 
 local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
 local SPHEY = 0 -- ..y 
 local SPHER = 128 -- Surface radius
--- Tube realm
+-- Cylinder world and tube world
 local TUBEZ = 0 -- Axis z
 local TUBEY = 0 -- ..y
 local TUBER = 128 -- Surface radius
 local TUBEX = 4000 -- Endcap base +-x
 local TUBED = 128 -- Endcap dish depth
--- Cube and dyson cube realm
+-- Planet cube and dyson cube
 local CUBEX = 0 -- Centre x
 local CUBEZ = 0 -- ..z
 local CUBEY = 0 -- ..y 
@@ -269,7 +268,7 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			grad = (z - VERTZ) / TERRS
 		elseif invert then
 			grad = (y - FLATY) / TERRS
-		elseif dysonsphere or planet then
+		elseif planet or dysonsphere then
 			sphexr = x - SPHEX
 			spheyr = y - SPHEY
 			sphezr = z - SPHEZ
@@ -279,11 +278,15 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			else
 				grad = (SPHER - nodrad) / TERRS
 			end
-		elseif tube then
+		elseif rod or tube then
 			tubeyr = y - TUBEY
 			tubezr = z - TUBEZ
 			local nodrad = math.sqrt(tubeyr ^ 2 + tubezr ^ 2)
-			grad = (nodrad - TUBER) / TERRS
+			if tube then
+				grad = (nodrad - TUBER) / TERRS
+			else
+				grad = (TUBER - nodrad) / TERRS
+			end
 		elseif cube or dysoncube then
 			cubexr = x - CUBEX
 			cubeyr = y - CUBEY
@@ -397,6 +400,16 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				elseif sphezr < -math.abs(sphexr)
 				and sphezr < -math.abs(spheyr) then
 					nodrot = 4
+				end
+			elseif rod then
+				if tubeyr > math.abs(tubezr) then
+					nodrot = 0
+				elseif tubeyr < -math.abs(tubezr) then
+					nodrot = 20
+				elseif tubezr > math.abs(tubeyr) then
+					nodrot = 4
+				elseif tubezr < -math.abs(tubeyr) then
+					nodrot = 8
 				end
 			elseif tube then
 				if tubeyr > math.abs(tubezr) then
