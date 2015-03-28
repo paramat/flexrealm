@@ -5,7 +5,6 @@ local vertical = false -- Vertical flat realm facing south
 local invert = false -- Inverted flat realm
 local planet = false -- Planet sphere
 local dysonsphere = false -- Dyson sphere
-local rod = false -- Cylinder world
 local tube = true -- East-West tube world / O'Neill space colony
 local cube = false -- Planet cube
 local dysoncube = false -- Dyson cube
@@ -29,7 +28,7 @@ local SPHEX = 0 -- Centre x
 local SPHEZ = 0 -- ..z
 local SPHEY = 0 -- ..y 
 local SPHER = 128 -- Surface radius
--- Cylinder world and tube world
+-- Tube world
 local TUBEZ = 0 -- Axis z
 local TUBEY = 0 -- ..y
 local TUBER = 128 -- Surface radius
@@ -278,15 +277,11 @@ minetest.register_on_generated(function(minp, maxp, seed)
 			else
 				grad = (SPHER - nodrad) / TERRS
 			end
-		elseif rod or tube then
+		elseif tube then
 			tubeyr = y - TUBEY
 			tubezr = z - TUBEZ
 			local nodrad = math.sqrt(tubeyr ^ 2 + tubezr ^ 2)
-			if tube then
-				grad = (nodrad - TUBER) / TERRS
-			else
-				grad = (TUBER - nodrad) / TERRS
-			end
+			grad = (nodrad - TUBER) / TERRS
 		elseif cube or dysoncube then
 			cubexr = x - CUBEX
 			cubeyr = y - CUBEY
@@ -400,16 +395,6 @@ minetest.register_on_generated(function(minp, maxp, seed)
 				elseif sphezr < -math.abs(sphexr)
 				and sphezr < -math.abs(spheyr) then
 					nodrot = 4
-				end
-			elseif rod then
-				if tubeyr > math.abs(tubezr) then
-					nodrot = 0
-				elseif tubeyr < -math.abs(tubezr) then
-					nodrot = 20
-				elseif tubezr > math.abs(tubeyr) then
-					nodrot = 4
-				elseif tubezr < -math.abs(tubeyr) then
-					nodrot = 8
 				end
 			elseif tube then
 				if tubeyr > math.abs(tubezr) then

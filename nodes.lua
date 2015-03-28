@@ -80,6 +80,21 @@ minetest.register_node("flexrealm:leaves", {
 	sounds = default.node_sound_leaves_defaults(),
 })
 
+minetest.register_node("flexrealm:apple", {
+	description = "Flexrealm Apple",
+	drawtype = "plantlike",
+	visual_scale = 1.0,
+	tiles = {"default_apple.png"},
+	inventory_image = "default_apple.png",
+	paramtype = "light",
+	paramtype2 = "facedir",
+	sunlight_propagates = true,
+	walkable = false,
+	groups = {fleshy=3,dig_immediate=3,flammable=2},
+	drop = "default:apple",
+	sounds = default.node_sound_leaves_defaults(),
+})
+
 minetest.register_node("flexrealm:jungleleaves", {
 	description = "Flexrealm Jungle Leaves",
 	drawtype = "allfaces_optional",
