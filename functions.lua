@@ -1,6 +1,6 @@
 function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 	local c_tree = minetest.get_content_id("default:tree")
-	local c_apple = minetest.get_content_id("flexrealm:apple")
+	local c_apple = minetest.get_content_id("default:apple")
 	local c_leaves = minetest.get_content_id("flexrealm:leaves")
 	if nodrot == 12 then
 		for i = -1, 5 do
@@ -10,7 +10,6 @@ function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 					local vil = area:index(x + i + 1, y + j, z + k)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-						p2data[vil] = nodrot
 					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
 						p2data[vil] = nodrot
@@ -30,7 +29,6 @@ function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 					local vil = area:index(x - i - 1, y + j, z + k)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-						p2data[vil] = nodrot
 					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
 						p2data[vil] = nodrot
@@ -50,7 +48,6 @@ function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 					local vil = area:index(x + i, y + j + 1, z + k)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-						p2data[vil] = nodrot
 					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
 						p2data[vil] = nodrot
@@ -70,7 +67,6 @@ function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 					local vil = area:index(x + i, y - j - 1, z + k)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-						p2data[vil] = nodrot
 					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
 						p2data[vil] = nodrot
@@ -90,7 +86,6 @@ function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 					local vil = area:index(x + i, y + j, z + k + 1)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-						p2data[vil] = nodrot
 					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
 						p2data[vil] = nodrot
@@ -110,7 +105,6 @@ function flexrealm_appletree(x, y, z, nodrot, area, data, p2data)
 					local vil = area:index(x + i, y + j, z - k - 1)
 					if math.random(48) == 2 then
 						data[vil] = c_apple
-						p2data[vil] = nodrot
 					elseif math.random(5) ~= 2 then
 						data[vil] = c_leaves
 						p2data[vil] = nodrot
@@ -243,11 +237,11 @@ end
 
 
 function flexrealm_grass(x, y, z, nodrot, area, data, p2data)
-	local c_grass1 = minetest.get_content_id("flexrealm:grass_1")
-	local c_grass2 = minetest.get_content_id("flexrealm:grass_2")
-	local c_grass3 = minetest.get_content_id("flexrealm:grass_3")
-	local c_grass4 = minetest.get_content_id("flexrealm:grass_4")
-	local c_grass5 = minetest.get_content_id("flexrealm:grass_5")
+	local c_grass1 = minetest.get_content_id("default:grass_1")
+	local c_grass2 = minetest.get_content_id("default:grass_2")
+	local c_grass3 = minetest.get_content_id("default:grass_3")
+	local c_grass4 = minetest.get_content_id("default:grass_4")
+	local c_grass5 = minetest.get_content_id("default:grass_5")
 	local via
 	if nodrot == 12 then
 		via = area:index(x + 1, y, z)
@@ -274,12 +268,11 @@ function flexrealm_grass(x, y, z, nodrot, area, data, p2data)
 	else
 		data[via] = c_grass5
 	end
-	p2data[via] = nodrot
 end
 
 
 function flexrealm_dryshrub(x, y, z, nodrot, area, data, p2data)
-	local c_dryshrub = minetest.get_content_id("flexrealm:dry_shrub")
+	local c_dryshrub = minetest.get_content_id("default:dry_shrub")
 	local via
 	if nodrot == 12 then
 		via = area:index(x + 1, y, z)
@@ -295,12 +288,11 @@ function flexrealm_dryshrub(x, y, z, nodrot, area, data, p2data)
 		via = area:index(x , y , z - 1)
 	end
 	data[via] = c_dryshrub
-	p2data[via] = nodrot
 end
 
 
 function flexrealm_jungrass(x, y, z, nodrot, area, data, p2data)
-	local c_jungrass = minetest.get_content_id("flexrealm:junglegrass")
+	local c_jungrass = minetest.get_content_id("default:junglegrass")
 	local via
 	if nodrot == 12 then
 		via = area:index(x + 1, y, z)
@@ -316,60 +308,53 @@ function flexrealm_jungrass(x, y, z, nodrot, area, data, p2data)
 		via = area:index(x , y , z - 1)
 	end
 	data[via] = c_jungrass
-	p2data[via] = nodrot
 end
 
 
 function flexrealm_papyrus(x, y, z, nodrot, area, data, p2data)
-	local c_papyrus = minetest.get_content_id("flexrealm:papyrus")
+	local c_papyrus = minetest.get_content_id("default:papyrus")
 	local ph = math.random(2, 5)
 	if nodrot == 12 then
 		for i = 1, ph do
 			local vip = area:index(x + i, y, z)
 			data[vip] = c_papyrus
-			p2data[vip] = nodrot
 		end
 	elseif nodrot == 16 then
 		for i = 1, ph do
 			local vip = area:index(x - i, y, z)
 			data[vip] = c_papyrus
-			p2data[vip] = nodrot
 		end
 	elseif nodrot == 0 then
 		for j = 1, ph do
 			local vip = area:index(x, y + j, z)
 			data[vip] = c_papyrus
-			p2data[vip] = nodrot
 		end
 	elseif nodrot == 20 then
 		for j = 1, ph do
 			local vip = area:index(x, y - j, z)
 			data[vip] = c_papyrus
-			p2data[vip] = nodrot
 		end
 	elseif nodrot == 4 then
 		for k = 1, ph do
 			local vip = area:index(x, y, z + k)
 			data[vip] = c_papyrus
-			p2data[vip] = nodrot
 		end
 	elseif nodrot == 8 then
 		for k = 1, ph do
 			local vip = area:index(x, y, z - k)
 			data[vip] = c_papyrus
-			p2data[vip] = nodrot
 		end
 	end
 end
 
 
 function flexrealm_flower(x, y, z, nodrot, area, data, p2data)
-	local c_danwhi = minetest.get_content_id("flexrealm:dandelion_white")
-	local c_danyel = minetest.get_content_id("flexrealm:dandelion_yellow")
-	local c_rose = minetest.get_content_id("flexrealm:rose")
-	local c_tulip = minetest.get_content_id("flexrealm:tulip")
-	local c_geranium = minetest.get_content_id("flexrealm:geranium")
-	local c_viola = minetest.get_content_id("flexrealm:viola")
+	local c_danwhi = minetest.get_content_id("flowers:dandelion_white")
+	local c_danyel = minetest.get_content_id("flowers:dandelion_yellow")
+	local c_rose = minetest.get_content_id("flowers:rose")
+	local c_tulip = minetest.get_content_id("flowers:tulip")
+	local c_geranium = minetest.get_content_id("flowers:geranium")
+	local c_viola = minetest.get_content_id("flowers:viola")
 	local via
 	if nodrot == 12 then
 		via = area:index(x + 1, y, z)
@@ -398,7 +383,6 @@ function flexrealm_flower(x, y, z, nodrot, area, data, p2data)
 	else
 		data[via] = c_viola
 	end
-	p2data[via] = nodrot
 end
 
 
@@ -466,4 +450,3 @@ function flexrealm_cactus(x, y, z, nodrot, area, data, p2data)
 		end
 	end
 end
-
