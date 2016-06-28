@@ -62,6 +62,7 @@ minetest.register_node("flexrealm:cloud", {
 	pointable = false,
 	diggable = false,
 	buildable_to = true,
+	floodable = true,
 	post_effect_color = {a = 23, r = 241, g = 248, b = 255},
 	groups = {not_in_creative_inventory = 1},
 })
@@ -72,30 +73,6 @@ minetest.register_node("flexrealm:leaves", {
 	waving = 1,
 	visual_scale = 1.3,
 	tiles = {"default_leaves.png"},
-	paramtype = "light",
-	paramtype2 = "facedir",
-	groups = {snappy = 3, flammable = 2, leaves = 1},
-	sounds = default.node_sound_leaves_defaults(),
-})
-
-minetest.register_node("flexrealm:jungleleaves", {
-	description = "Flexrealm Jungle Leaves",
-	drawtype = "allfaces_optional",
-	waving = 1,
-	visual_scale = 1.3,
-	tiles = {"default_jungleleaves.png"},
-	paramtype = "light",
-	paramtype2 = "facedir",
-	groups = {snappy = 3, flammable = 2, leaves = 1},
-	sounds = default.node_sound_leaves_defaults(),
-})
-
-minetest.register_node("flexrealm:pine_needles",{
-	description = "Flexrealm Pine Needles",
-	drawtype = "allfaces_optional",
-	visual_scale = 1.3,
-	tiles = {"default_pine_needles.png"},
-	waving = 1,
 	paramtype = "light",
 	paramtype2 = "facedir",
 	groups = {snappy = 3, flammable = 2, leaves = 1},
@@ -178,5 +155,5 @@ minetest.register_node("flexrealm:lavazero", {
 	liquid_range = 0,
 	damage_per_second = 8,
 	post_effect_color = {a = 192, r = 255, g = 64, b = 0},
-	groups = {lava = 3, liquid = 2, hot = 3, igniter = 1},
+	groups = {lava = 3, liquid = 2, igniter = 1},
 })
